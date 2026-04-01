@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Food Production Log</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0d0f18;--surf:#161925;--surf2:#1e2235;--surf3:#252a40;
+  --brd:#2a2f48;--brd2:#343b5a;
+  --blue:#4f8ef7;--blue-d:rgba(79,142,247,.12);
+  --green:#34c78a;--green-d:rgba(52,199,138,.12);
+  --orange:#f5a623;--orange-d:rgba(245,166,35,.12);
+  --red:#e85d5d;--red-d:rgba(232,93,93,.12);
+  --amber:#ffb347;--amber-d:rgba(255,179,71,.13);
+  --teal:#2dd4bf;--teal-d:rgba(45,212,191,.12);
+  --purple:#9b6dff;--purple-d:rgba(155,109,255,.12);
+  --dbx:#0061ff;--dbx-d:rgba(0,97,255,.12);
+  --text:#dde1f0;--text2:#7d85a3;--text3:#454d6a;
+  --r:14px;--rs:9px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{min-height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px}
+.app{display:flex;flex-direction:column;min-height:100vh}
+
+/* Header */
+.hdr{background:var(--surf);border-bottom:1px solid var(--brd);padding:13px 16px;
+  display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:300}
+.logo{width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,#4f8ef7,#7b5cf0);
+  display:flex;align-items:center;justify-content:center;font-size:17px}
+.hdr-txt h1{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.hdr-txt p{font-size:11px;color:var(--text2);margin-top:1px;font-family:'DM Mono',monospace}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{border-radius:20px;padding:4px 9px;font-size:11px;font-weight:500;display:none;align-items:center;gap:4px}
+.badge.on{display:flex}
+.badge-live{background:var(--green-d);border:1px solid rgba(52,199,138,.25);color:var(--green);display:flex!important}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.badge-pend{background:var(--amber-d);border:1px solid rgba(255,179,71,.3);color:var(--amber)}
+.badge-carry{background:var(--teal-d);border:1px solid rgba(45,212,191,.3);color:var(--teal)}
+.badge-cnt{background:var(--blue-d);border:1px solid rgba(79,142,247,.25);color:var(--blue);font-family:'DM Mono',monospace}
+.badge-dbx{background:var(--dbx-d);border:1px solid rgba(0,97,255,.3);color:var(--dbx)}
+.settings-btn{width:32px;height:32px;border-radius:8px;background:var(--surf2);
+  border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.settings-btn:active{background:var(--surf3)}
+
+/* Tabs */
+.tabs{display:flex;background:var(--surf);border-bottom:1px solid var(--brd);position:sticky;top:63px;z-index:200}
+.tab{flex:1;padding:12px 4px;font-size:12px;font-weight:500;color:var(--text2);
+  text-align:center;cursor:pointer;border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s;user-select:none;position:relative}
+.tab.active{color:var(--blue);border-color:var(--blue)}
+.tab-pip{position:absolute;top:7px;right:calc(50% - 24px);
+  background:var(--amber);color:#000;border-radius:10px;padding:1px 5px;
+  font-size:9px;font-weight:700;display:none}
+.tab-pip.on{display:block}
+.tab-pip.teal{background:var(--teal)}
+
+/* Panels */
+.panel{display:none;padding:15px 14px 60px;max-width:660px;margin:0 auto;width:100%}
+.panel.active{display:block}
+
+/* Cards */
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r);
+  padding:16px;margin-bottom:11px;position:relative;overflow:hidden}
+.card.bar::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.bar-blue::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.bar-green::before{background:linear-gradient(90deg,var(--green),#20e8a0)}
+.bar-amber::before{background:linear-gradient(90deg,var(--amber),#ffcc70)}
+.bar-teal::before{background:linear-gradient(90deg,var(--teal),#5eead4)}
+.bar-orange::before{background:linear-gradient(90deg,var(--orange),#fbbf24)}
+.bar-dbx::before{background:linear-gradient(90deg,var(--dbx),#0080ff)}
+
+.ch{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.chip{width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px}
+.c-blue{background:var(--blue-d)}.c-green{background:var(--green-d)}
+.c-orange{background:var(--orange-d)}.c-purple{background:var(--purple-d)}
+.c-amber{background:var(--amber-d)}.c-teal{background:var(--teal-d)}
+.c-dbx{background:var(--dbx-d)}
+.ct{font-size:13px;font-weight:600;letter-spacing:-.2px}
+.cs{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* Form */
+.field{margin-bottom:12px}.field:last-child{margin-bottom:0}
+label{display:block;font-size:11px;font-weight:600;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+label .req{color:var(--blue);margin-left:2px}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--surf2);
+  border:1.5px solid var(--brd);border-radius:var(--rs);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;
+  outline:none;appearance:none;-webkit-appearance:none;
+  transition:border-color .15s,background .15s}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%237d85a3' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+select option{background:#1e2235}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);background:var(--surf3)}
+input.err,select.err{border-color:var(--red)!important}
+input:disabled,select:disabled{opacity:.35;cursor:not-allowed}
+textarea{resize:none;height:62px;line-height:1.5}
+.ii{position:relative}.ii .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.ii input{padding-left:36px}
+.hint{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.hint.on{display:block}
+.datebox{display:flex;align-items:center;gap:8px;background:var(--surf2);
+  border:1.5px solid var(--brd);border-radius:var(--rs);padding:10px 12px;font-size:14px;font-weight:500}
+.datebox .dl{color:var(--text2);font-size:11px;font-family:'DM Mono',monospace;margin-left:auto}
+
+/* Stepper */
+.step{display:flex;align-items:stretch;background:var(--surf2);
+  border:1.5px solid var(--brd);border-radius:var(--rs);overflow:hidden;transition:border-color .15s}
+.step:focus-within{border-color:var(--blue)}
+.sb{width:46px;flex-shrink:0;background:none;border:none;color:var(--text2);
+  font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color .12s,background .12s;padding-bottom:2px;user-select:none}
+.sb:active{background:rgba(79,142,247,.15);color:var(--blue)}
+.step input{flex:1;text-align:center;background:none;border:none;
+  border-left:1px solid var(--brd);border-right:1px solid var(--brd);
+  border-radius:0;padding:9px 4px;font-size:22px;font-weight:700;
+  font-family:'DM Mono',monospace;color:var(--text);min-width:0}
+.step input:focus{border-left-color:var(--brd);border-right-color:var(--brd);background:none}
+
+/* Leftover box */
+.lbox{margin-top:14px;padding:13px;background:var(--surf2);
+  border:1.5px solid var(--brd);border-radius:var(--rs);display:none}
+.lbox.on{display:block}
+.lbox-lbl{font-size:12px;color:var(--text2);margin-bottom:11px;line-height:1.5}
+.rw-toggle{display:grid;grid-template-columns:1fr 1fr;gap:0;
+  border:1.5px solid var(--brd);border-radius:var(--rs);overflow:hidden;margin-bottom:12px}
+.rw-btn{padding:12px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;
+  color:var(--text2);background:var(--surf3);border:none;transition:all .15s;user-select:none;line-height:1.3}
+.rw-btn:first-child{border-right:1px solid var(--brd)}
+.rw-btn.aw{background:var(--red-d);color:var(--red)}
+.rw-btn.ar{background:var(--teal-d);color:var(--teal)}
+.rw-amt{display:none}.rw-amt.on{display:block}
+.sstrip{display:none;gap:7px;margin-top:13px}
+.sstrip.on{display:grid;grid-template-columns:repeat(3,1fr)}
+.sp{border-radius:var(--rs);padding:8px 10px;text-align:center}
+.sp.sold{background:var(--green-d);border:1px solid rgba(52,199,138,.2)}
+.sp.reuse{background:var(--teal-d);border:1px solid rgba(45,212,191,.2)}
+.sp.waste{background:var(--red-d);border:1px solid rgba(232,93,93,.2)}
+.sp .pl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.sp .pv{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;margin-top:1px;line-height:1.1}
+.sp.sold .pv{color:var(--green)}.sp.reuse .pv{color:var(--teal)}.sp.waste .pv{color:var(--red)}
+
+/* Add button */
+.add-btn{width:100%;padding:14px;background:linear-gradient(135deg,#4f8ef7,#7b5cf0);
+  border:none;border-radius:var(--r);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .15s,transform .1s;box-shadow:0 4px 18px rgba(79,142,247,.25)}
+.add-btn:active{transform:scale(.98);opacity:.9}
+
+/* Carry-over */
+.carry-card{background:var(--surf2);border:1.5px solid rgba(45,212,191,.3);
+  border-radius:var(--rs);padding:12px 13px;margin-bottom:8px;
+  cursor:pointer;transition:border-color .15s,background .15s;animation:sIn .2s ease}
+.carry-card:active{background:var(--surf3)}
+.carry-top{display:flex;align-items:center;gap:9px}
+.carry-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0}
+.carry-body{flex:1;min-width:0}
+.carry-dish{font-size:13px;font-weight:500}
+.carry-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.carry-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.carry-amt{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;
+  color:var(--teal);background:var(--teal-d);border-radius:5px;padding:3px 8px}
+.carry-hint-lbl{font-size:10px;color:var(--text3)}
+
+/* Entries */
+.tally-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tally-lbl{font-size:13px;font-weight:600}
+.tally-pill{font-family:'DM Mono',monospace;font-size:12px;
+  background:var(--blue-d);color:var(--blue);border-radius:20px;padding:3px 9px}
+.elist{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.erow{background:var(--surf2);border:1.5px solid var(--brd);border-radius:var(--rs);
+  padding:11px 12px;display:flex;align-items:center;gap:9px;
+  cursor:pointer;transition:border-color .15s,background .15s;animation:sIn .2s ease}
+@keyframes sIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.erow:active{background:var(--surf3)}
+.erow.pend{border-color:rgba(255,179,71,.4);background:rgba(255,179,71,.03)}
+.erow.done{border-color:rgba(52,199,138,.2)}
+.edot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.erow.pend .edot{background:var(--amber)}.erow.done .edot{background:var(--green)}
+.ebody{flex:1;min-width:0}
+.edish{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emeta{font-size:11px;color:var(--text2);margin-top:2px}
+.eright{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.etags{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;border-radius:5px;padding:2px 6px}
+.tag.p{background:var(--blue-d);color:var(--blue)}
+.tag.w{background:var(--red-d);color:var(--red)}
+.tag.r{background:var(--teal-d);color:var(--teal)}
+.tag.ok{background:var(--green-d);color:var(--green);font-size:10px}
+.tag.pend{background:var(--amber-d);color:var(--amber);font-size:10px}
+.edit-hint{font-size:10px;color:var(--text3)}
+.empty{text-align:center;padding:20px 0;color:var(--text3);font-size:13px}
+
+/* Dropbox upload button */
+.dbx-btn{width:100%;padding:15px;
+  background:linear-gradient(135deg,#0061ff,#0080ff);
+  border:none;border-radius:var(--r);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:opacity .15s,transform .1s;box-shadow:0 4px 18px rgba(0,97,255,.3)}
+.dbx-btn:active{transform:scale(.98);opacity:.9}
+.dbx-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.dbx-btn .spinner{width:17px;height:17px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dl-note{font-size:11px;color:var(--text2);text-align:center;margin-top:7px;display:none}
+.dl-note .aw{color:var(--amber)}
+.no-token-warn{background:rgba(255,179,71,.08);border:1.5px solid rgba(255,179,71,.3);
+  border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;
+  font-size:12px;color:var(--amber);line-height:1.6;display:none}
+.no-token-warn.on{display:block}
+.howto{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);
+  border-radius:var(--rs);padding:12px 13px;margin-top:11px}
+.howto-t{font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.howto ol{padding-left:15px;display:flex;flex-direction:column;gap:4px}
+.howto li{font-size:12px;color:var(--text2);line-height:1.5}
+.howto li strong{color:var(--text)}
+
+/* Settings */
+.token-status{display:flex;align-items:center;gap:10px;
+  background:var(--surf2);border:1px solid var(--brd);border-radius:var(--rs);
+  padding:11px 13px;margin-bottom:12px}
+.token-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.token-dot.set{background:var(--green)}.token-dot.unset{background:var(--red)}
+.token-info{flex:1;min-width:0}
+.token-label{font-size:12px;font-weight:600}
+.token-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.clear-btn{background:var(--red-d);border:1px solid rgba(232,93,93,.3);
+  color:var(--red);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.save-token-btn{width:100%;padding:12px;background:linear-gradient(135deg,#0061ff,#0080ff);
+  border:none;border-radius:var(--rs);color:#fff;font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:opacity .15s,transform .1s}
+.save-token-btn:active{transform:scale(.98);opacity:.9}
+.import-zone{border:2px dashed var(--brd2);border-radius:var(--r);
+  padding:24px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;
+  position:relative}
+.import-zone:hover{border-color:var(--blue);background:var(--blue-d)}
+.import-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.iz-icon{font-size:28px;margin-bottom:8px}
+.iz-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.iz-sub{font-size:11px;color:var(--text2)}
+.menu-status{background:var(--surf2);border:1px solid var(--brd);border-radius:var(--rs);
+  padding:11px 13px;margin-bottom:11px}
+.msr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.msr:last-child{margin-bottom:0}
+.ms-lbl{font-size:11px;color:var(--text2)}
+.ms-val{font-size:11px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace}
+.ms-date{font-size:10px;color:var(--text3);margin-top:5px}
+.reset-btn{width:100%;padding:11px;background:var(--red-d);border:1.5px solid rgba(232,93,93,.3);
+  border-radius:var(--rs);color:var(--red);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;margin-top:9px;
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+.reset-btn:hover{background:rgba(232,93,93,.2)}
+
+/* Setup steps */
+.setup-step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.setup-num{width:22px;height:22px;border-radius:50%;background:var(--dbx);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.setup-text{font-size:12px;color:var(--text2);line-height:1.6;flex:1}
+.setup-text strong{color:var(--text)}
+.setup-text a{color:var(--blue);text-decoration:none}
+.setup-text code{background:var(--surf3);border-radius:4px;padding:1px 5px;
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--teal)}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;
+  display:none;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex;animation:fIn .15s ease}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surf);border:1px solid var(--brd2);border-radius:20px 20px 0 0;
+  padding:20px 16px 36px;width:100%;max-width:660px;max-height:92vh;overflow-y:auto;
+  animation:sUp .25s cubic-bezier(.34,1.2,.64,1)}
+@keyframes sUp{from{transform:translateY(60px);opacity:.5}to{transform:none;opacity:1}}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--surf2);
+  border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;color:var(--text2)}
+.modal-close:active{background:var(--surf3)}
+.modal-info{font-size:12px;color:var(--text2);background:var(--surf2);
+  border-radius:var(--rs);padding:10px 12px;margin-bottom:14px;line-height:1.5}
+.modal-info strong{color:var(--text);display:block;font-size:14px;margin-bottom:2px}
+.carry-from-badge{display:inline-flex;align-items:center;gap:5px;
+  background:var(--teal-d);border:1px solid rgba(45,212,191,.3);color:var(--teal);
+  border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;margin-bottom:14px}
+.msave-btn{width:100%;padding:13px;border:none;border-radius:var(--r);color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .15s,transform .1s;margin-top:6px}
+.msave-btn.g{background:linear-gradient(135deg,var(--green),#20c97a)}
+.msave-btn.b{background:linear-gradient(135deg,#4f8ef7,#7b5cf0)}
+.msave-btn:active{transform:scale(.98);opacity:.9}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(65px);
+  background:var(--surf2);border:1px solid var(--brd2);border-radius:40px;
+  padding:10px 18px;font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:6px;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+  opacity:0;z-index:999;box-shadow:0 8px 28px rgba(0,0,0,.5);white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(52,199,138,.35);color:var(--green)}
+.toast.err{border-color:rgba(232,93,93,.35);color:var(--red)}
+.toast.dbx{border-color:rgba(0,97,255,.35);color:var(--dbx)}
+.toast.info{border-color:rgba(255,179,71,.35);color:var(--amber)}
+.toast.teal{border-color:rgba(45,212,191,.35);color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="logo">🍽️</div>
+    <div class="hdr-txt">
+      <h1>Production Log</h1>
+      <p id="hdrDate">—</p>
+    </div>
+    <div class="hdr-right">
+      <div class="badge badge-carry" id="bdgCarry">🔄 <span id="bdgCarryN">0</span></div>
+      <div class="badge badge-pend"  id="bdgPend">⚠️ <span id="bdgPendN">0</span></div>
+      <div class="badge badge-cnt"   id="bdgCnt"></div>
+      <div class="badge badge-dbx"   id="bdgDbx">📦 Connected</div>
+      <div class="badge badge-live"><div class="ldot"></div>Live</div>
+      <div class="settings-btn" onclick="switchTab('settings')" title="Settings">⚙️</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-add"      onclick="switchTab('add')">➕ Add Entry</div>
+    <div class="tab"        id="tab-log"      onclick="switchTab('log')">
+      📋 Today's Log <span class="tab-pip" id="pipPend"></span>
+    </div>
+    <div class="tab"        id="tab-settings" onclick="switchTab('settings')">⚙️ Settings</div>
+  </div>
+
+  <!-- ══ ADD PANEL ══ -->
+  <div class="panel active" id="panel-add">
+    <div class="card bar bar-blue">
+      <div class="ch"><div class="chip c-purple">👤</div>
+        <div><div class="ct">Staff Sign-In</div><div class="cs">Name saved on every entry</div></div>
+      </div>
+      <div class="field">
+        <label>Your Name <span class="req">*</span></label>
+        <div class="ii"><span class="ico">✍️</span>
+          <input type="text" id="staffName" placeholder="e.g. Claire, Matt, Sarah…" autocomplete="given-name">
+        </div>
+        <div class="hint" id="h-staff">Please enter your name.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="chip c-blue">📍</div>
+        <div><div class="ct">Date &amp; Unit</div><div class="cs">Auto-dated to today</div></div>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <div class="datebox">📅 <strong id="dateDisp">—</strong><span class="dl" id="dayDisp"></span></div>
+      </div>
+      <div class="field" style="margin-top:11px">
+        <label>Unit / Kitchen <span class="req">*</span></label>
+        <select id="unitSel" onchange="updateMenus()">
+          <option value="">Select unit…</option>
+        </select>
+        <div class="hint" id="h-unit">Please select a unit.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="chip c-orange">📋</div>
+        <div><div class="ct">Menu &amp; Dish</div><div class="cs" id="menuDataSource">Loading…</div></div>
+      </div>
+      <div class="field">
+        <label>Menu Category <span class="req">*</span></label>
+        <select id="menuSel" onchange="updateDishes()" disabled>
+          <option value="">Select unit first…</option>
+        </select>
+        <div class="hint" id="h-menu">Please select a menu.</div>
+      </div>
+      <div class="field">
+        <label>Dish Name <span class="req">*</span></label>
+        <select id="dishSel" disabled>
+          <option value="">Select menu first…</option>
+        </select>
+        <div class="hint" id="h-dish">Please select a dish.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="chip c-green">🔢</div>
+        <div><div class="ct">Portions</div><div class="cs">Log produced now — add waste after service</div></div>
+      </div>
+      <div class="field">
+        <label>Portions Produced <span class="req">*</span></label>
+        <div class="step">
+          <button class="sb" ontouchstart="" onclick="adj('prod',-1)">−</button>
+          <input type="number" id="prod" value="0" min="0" inputmode="numeric" oninput="recalc()">
+          <button class="sb" ontouchstart="" onclick="adj('prod',1)">+</button>
+        </div>
+        <div class="hint" id="h-prod">Must be at least 1.</div>
+      </div>
+      <div class="lbox" id="lbox">
+        <div class="lbox-lbl">After service — what happened to the leftovers?</div>
+        <div class="field">
+          <label>Portions Wasted</label>
+          <div class="step">
+            <button class="sb" ontouchstart="" onclick="adj('wasted',-1)">−</button>
+            <input type="number" id="wasted" value="0" min="0" inputmode="numeric" oninput="recalc()">
+            <button class="sb" ontouchstart="" onclick="adj('wasted',1)">+</button>
+          </div>
+          <div class="hint" id="h-wasted">Cannot exceed portions produced.</div>
+        </div>
+        <div id="carryToggle" style="display:none">
+          <label style="margin-top:4px">Did any unsold portions get carried over?</label>
+          <div class="rw-toggle">
+            <button class="rw-btn" id="btnNo"  onclick="setCarry(false)">✗ No — all gone</button>
+            <button class="rw-btn" id="btnYes" onclick="setCarry(true)">🔄 Yes — carry over</button>
+          </div>
+          <div class="rw-amt" id="carryAmtWrap">
+            <label>Portions carried over</label>
+            <div class="step">
+              <button class="sb" ontouchstart="" onclick="adj('reused',-1)">−</button>
+              <input type="number" id="reused" value="0" min="0" inputmode="numeric" oninput="recalc()">
+              <button class="sb" ontouchstart="" onclick="adj('reused',1)">+</button>
+            </div>
+            <div class="hint" id="h-reused">Wasted + carried over cannot exceed produced.</div>
+          </div>
+        </div>
+        <div class="sstrip" id="sstrip">
+          <div class="sp sold"><div class="pl">Sold</div><div class="pv" id="sumSold">—</div></div>
+          <div class="sp waste"><div class="pl">Wasted</div><div class="pv" id="sumWaste">0</div></div>
+          <div class="sp reuse"><div class="pl">Carry Over</div><div class="pv" id="sumReuse">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="chip c-blue">💬</div>
+        <div><div class="ct">Comments</div><div class="cs">Optional</div></div>
+      </div>
+      <div class="field">
+        <textarea id="cmts" placeholder="e.g. Reduced batch, high demand…"></textarea>
+      </div>
+    </div>
+    <button class="add-btn" onclick="addEntry()">➕ &nbsp;Add Entry to Today's Log</button>
+  </div>
+
+  <!-- ══ LOG PANEL ══ -->
+  <div class="panel" id="panel-log">
+    <div id="carrySection" style="display:none">
+      <div class="card bar bar-teal">
+        <div class="ch"><div class="chip c-teal">🔄</div>
+          <div><div class="ct" style="color:var(--teal)">Carry-Over Reminders</div>
+            <div class="cs">Tap a dish to log today's figures</div></div>
+        </div>
+        <div id="carryList"></div>
+      </div>
+    </div>
+    <div class="card bar bar-amber" id="pendCard" style="display:none">
+      <div class="ch"><div class="chip c-amber">⚠️</div>
+        <div><div class="ct">Waste Pending</div><div class="cs">Tap highlighted entries to complete them</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6">These entries still have no waste recorded. Fill them in before uploading.</p>
+    </div>
+    <div class="card bar bar-green">
+      <div class="tally-row">
+        <span class="tally-lbl">Session entries</span>
+        <span class="tally-pill" id="tallyPill">0 entries</span>
+      </div>
+      <div class="elist" id="eList">
+        <div class="empty">No entries yet — go to ➕ Add Entry to start</div>
+      </div>
+
+      <!-- No token warning -->
+      <div class="no-token-warn" id="noTokenWarn">
+        ⚠️ Dropbox is not connected yet. Go to ⚙️ Settings to add your access token before uploading.
+      </div>
+
+      <!-- Pending warning -->
+      <div class="dl-note" id="dlNote">
+        <span class="aw">⚠️ <span id="dlPendN">0</span> entries still have no waste recorded</span>
+        — these will be highlighted yellow in the file
+      </div>
+
+      <!-- Upload button -->
+      <button class="dbx-btn" id="dbxBtn" onclick="doUpload()" disabled>
+        <span id="dbxBtnIcon">📦</span>
+        <span id="dbxBtnText">Send to Dropbox</span>
+      </button>
+
+      <div class="howto" style="margin-top:12px">
+        <div class="howto-t">What happens when you tap Send</div>
+        <ol>
+          <li>The day's log is packaged as a spreadsheet</li>
+          <li>It uploads automatically to the <strong>Food Production Logs</strong> folder in Dropbox</li>
+          <li>The filename includes your unit name and today's date</li>
+          <li>Your manager will see it appear in their Dropbox immediately</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS PANEL ══ -->
+  <div class="panel" id="panel-settings">
+
+    <!-- Dropbox connection -->
+    <div class="card bar bar-dbx">
+      <div class="ch"><div class="chip c-dbx">📦</div>
+        <div><div class="ct">Dropbox Connection</div><div class="cs">Manager sets this up once per device</div></div>
+      </div>
+
+      <div class="token-status" id="tokenStatus">
+        <div class="token-dot unset" id="tokenDot"></div>
+        <div class="token-info">
+          <div class="token-label" id="tokenLabel">Not connected</div>
+          <div class="token-sub" id="tokenSub">Enter your Dropbox access token below</div>
+        </div>
+        <button class="clear-btn" id="clearTokenBtn" onclick="clearToken()" style="display:none">Clear</button>
+      </div>
+
+      <div id="tokenInputSection">
+        <div class="field">
+          <label>Refresh Token</label>
+          <input type="password" id="tokenInput" placeholder="Paste your Dropbox refresh token here…" autocomplete="off">
+        </div>
+        <button class="save-token-btn" onclick="saveToken()">📦 &nbsp;Save &amp; Connect Dropbox</button>
+      </div>
+
+        <div style="margin-top:16px;border-top:1px solid var(--brd);padding-top:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--dbx);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">
+          Dropbox is already configured — paste your refresh token above
+        </div>
+        <div class="setup-step">
+          <div class="setup-num">1</div>
+          <div class="setup-text">Your refresh token is: <code>LFyA5Na3hTEAAAAAAAAAAS3gMH_Pi1cs8YYZQcgPaOoAiWQqgAGvB53J3C-x72LV</code> — paste this into the field above and tap Save</div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num">2</div>
+          <div class="setup-text">For each additional tablet, open the app, go to ⚙️ Settings, paste the same refresh token and tap Save. That's it.</div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num">3</div>
+          <div class="setup-text">Files will appear in your Dropbox at <code>Apps/Food Production/</code> — one file per unit per day</div>
+        </div>
+        <div style="background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.25);border-radius:var(--rs);padding:10px 12px;margin-top:4px">
+          <div style="font-size:11px;color:var(--amber);line-height:1.6">
+            ⚠️ <strong style="color:var(--text)">Keep your refresh token private.</strong>
+            Do not share it or paste it anywhere else. It gives upload access to your Dropbox app folder only.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu data -->
+    <div class="card bar bar-orange">
+      <div class="ch"><div class="chip c-orange">📊</div>
+        <div><div class="ct">Menu Data</div><div class="cs">What the app is using right now</div></div>
+      </div>
+      <div class="menu-status">
+        <div class="msr"><span class="ms-lbl">Dishes loaded</span><span class="ms-val" id="statusDishes">—</span></div>
+        <div class="msr"><span class="ms-lbl">Menu categories</span><span class="ms-val" id="statusMenus">—</span></div>
+        <div class="msr"><span class="ms-lbl">Units</span><span class="ms-val" id="statusUnits">—</span></div>
+        <div class="ms-date" id="statusDate"></div>
+      </div>
+    </div>
+
+    <div class="card bar bar-blue">
+      <div class="ch"><div class="chip c-blue">📥</div>
+        <div><div class="ct">Import Updated Menu Data</div>
+          <div class="cs">Select Menu-Data.xlsx after editing it</div></div>
+      </div>
+      <div class="import-zone">
+        <input type="file" id="menuFileInput" accept=".xlsx,.xls" onchange="handleMenuImport(this)">
+        <div class="iz-icon">📂</div>
+        <div class="iz-title">Tap to select Menu-Data.xlsx</div>
+        <div class="iz-sub">Dropdowns update instantly</div>
+      </div>
+      <button class="reset-btn" onclick="resetToDefaults()">🔄 &nbsp;Reset to Built-In Default Menu</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit modal -->
+<div class="overlay" id="editOverlay" onclick="closeEdit(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="editTitle">Edit Entry</span>
+      <div class="modal-close" onclick="closeEditDirect()">✕</div>
+    </div>
+    <div class="modal-info" id="editInfo"></div>
+    <div class="field">
+      <label>Portions Produced <span class="req">*</span></label>
+      <div class="step">
+        <button class="sb" ontouchstart="" onclick="adjE('eProd',-1)">−</button>
+        <input type="number" id="eProd" value="0" min="0" inputmode="numeric" oninput="recalcE()">
+        <button class="sb" ontouchstart="" onclick="adjE('eProd',1)">+</button>
+      </div>
+      <div class="hint" id="h-eProd">Must be at least 1.</div>
+    </div>
+    <div class="lbox on" style="margin-top:0;margin-bottom:12px">
+      <div class="lbox-lbl">What happened to the leftovers?</div>
+      <div class="field">
+        <label>Portions Wasted</label>
+        <div class="step">
+          <button class="sb" ontouchstart="" onclick="adjE('eWasted',-1)">−</button>
+          <input type="number" id="eWasted" value="0" min="0" inputmode="numeric" oninput="recalcE()">
+          <button class="sb" ontouchstart="" onclick="adjE('eWasted',1)">+</button>
+        </div>
+        <div class="hint" id="h-eWasted">Cannot exceed produced.</div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Did any unsold portions get carried over?</label>
+        <div class="rw-toggle">
+          <button class="rw-btn" id="eBtnNo"  onclick="setCarryE(false)">✗ No</button>
+          <button class="rw-btn" id="eBtnYes" onclick="setCarryE(true)">🔄 Yes</button>
+        </div>
+        <div class="rw-amt" id="eCarryWrap">
+          <label>Portions carried over</label>
+          <div class="step">
+            <button class="sb" ontouchstart="" onclick="adjE('eReused',-1)">−</button>
+            <input type="number" id="eReused" value="0" min="0" inputmode="numeric" oninput="recalcE()">
+            <button class="sb" ontouchstart="" onclick="adjE('eReused',1)">+</button>
+          </div>
+          <div class="hint" id="h-eReused">Wasted + carried over cannot exceed produced.</div>
+        </div>
+      </div>
+      <div class="sstrip on" style="margin-top:12px">
+        <div class="sp sold"><div class="pl">Sold</div><div class="pv" id="eSumSold">—</div></div>
+        <div class="sp waste"><div class="pl">Wasted</div><div class="pv" id="eSumWaste">0</div></div>
+        <div class="sp reuse"><div class="pl">Carry Over</div><div class="pv" id="eSumReuse">0</div></div>
+      </div>
+    </div>
+    <div class="field"><label>Comments</label>
+      <textarea id="eCmts" placeholder="Any notes…"></textarea>
+    </div>
+    <button class="msave-btn g" onclick="saveEdit()">✓ &nbsp;Save Changes</button>
+  </div>
+</div>
+
+<!-- Carry-over modal -->
+<div class="overlay" id="carryOverlay" onclick="closeCarry(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">🔄 Log Carry-Over</span>
+      <div class="modal-close" onclick="closeCarryDirect()">✕</div>
+    </div>
+    <div class="carry-from-badge">Carried over from <span id="cFromDate"></span></div>
+    <div class="modal-info" id="cInfo"></div>
+    <div class="field">
+      <label>Staff Name <span class="req">*</span></label>
+      <div class="ii"><span class="ico">✍️</span>
+        <input type="text" id="cStaff" placeholder="Your name…">
+      </div>
+      <div class="hint" id="h-cStaff">Please enter your name.</div>
+    </div>
+    <div class="field">
+      <label>Portions available from carry-over <span class="req">*</span></label>
+      <div class="step">
+        <button class="sb" ontouchstart="" onclick="adjC('cProd',-1)">−</button>
+        <input type="number" id="cProd" value="0" min="0" inputmode="numeric" oninput="recalcC()">
+        <button class="sb" ontouchstart="" onclick="adjC('cProd',1)">+</button>
+      </div>
+      <div class="hint" id="h-cProd">Must be at least 1.</div>
+    </div>
+    <div class="lbox on" style="margin-top:0;margin-bottom:12px">
+      <div class="lbox-lbl">What happened to the leftovers?</div>
+      <div class="field">
+        <label>Portions Wasted</label>
+        <div class="step">
+          <button class="sb" ontouchstart="" onclick="adjC('cWasted',-1)">−</button>
+          <input type="number" id="cWasted" value="0" min="0" inputmode="numeric" oninput="recalcC()">
+          <button class="sb" ontouchstart="" onclick="adjC('cWasted',1)">+</button>
+        </div>
+        <div class="hint" id="h-cWasted">Cannot exceed produced.</div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Carried over again?</label>
+        <div class="rw-toggle">
+          <button class="rw-btn" id="cBtnNo"  onclick="setCarryC(false)">✗ No</button>
+          <button class="rw-btn" id="cBtnYes" onclick="setCarryC(true)">🔄 Yes</button>
+        </div>
+        <div class="rw-amt" id="cCarryWrap">
+          <label>Portions carried over</label>
+          <div class="step">
+            <button class="sb" ontouchstart="" onclick="adjC('cReused',-1)">−</button>
+            <input type="number" id="cReused" value="0" min="0" inputmode="numeric" oninput="recalcC()">
+            <button class="sb" ontouchstart="" onclick="adjC('cReused',1)">+</button>
+          </div>
+          <div class="hint" id="h-cReused">Wasted + carried over cannot exceed produced.</div>
+        </div>
+      </div>
+      <div class="sstrip on" style="margin-top:12px">
+        <div class="sp sold"><div class="pl">Sold</div><div class="pv" id="cSumSold">—</div></div>
+        <div class="sp waste"><div class="pl">Wasted</div><div class="pv" id="cSumWaste">0</div></div>
+        <div class="sp reuse"><div class="pl">Carry Over</div><div class="pv" id="cSumReuse">0</div></div>
+      </div>
+    </div>
+    <div class="field"><label>Comments</label>
+      <textarea id="cCmts" placeholder="Any notes…"></textarea>
+    </div>
+    <button class="msave-btn b" onclick="confirmCarry()">➕ &nbsp;Add to Today's Log</button>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script>
+// ══ Default menu data ════════════════════════════════════════════════════
+const DEFAULT_MENUS={
+  "Bakery":["Apple Crumbs Cake","Banana & Toffee Loaf","Banana Donut","Biscoff Cake","Black Forest","Blue Muffin","Blueberry Cupcake","Brownie","Butter Cupcake","Caramel Cake","Caramel Donut","Carrot Cake","Cheese Cake","Cherry & Almond Slice","Choc & Banana Loaf","Choc & Nana Loaf","Choclate & Caramel Donut","Choclate Cake","Choclate Cookies","Choclate Donut","Choclate Eclairs","Choclate Fudge","Choclate Muffin","Choclate Orange Donut","Choclate Ring","Choclate Sponge","Cookies","Cupcakes","Donut","Double Choclate Cookie","Eton Mess Cupcake","Fruit Balls","Fruit Cake","Fruit Salad","GF Brownie","GF Cappuccino Cake","GF Caramel Heaven","GF Choco Fudge","GF Cupcake","GF Flap Jacks","GF Lemon Drizzle","GF Millionaire Short Bread","GF Oat Bars","Ginger Bread Cupcakes","Ginger Cake","Ginger Loaf","Honeycomb Brownie","Honeycomb Tiffin","Iced Buns","Iced Rings","Jam Donut","Lemon & Poppy Loaf","Lemon Cake","Lemon Donut","Lemon Drizzle","Lemon Meringue Donut","Lemon Muffin","Lemon/Strawberry Donut","M&M Cookies","Mango","Melon & Pineapple","Melon Balls","Mince Pie","Mini VG Victoria","Minstrels Cookies","Mint Tiffin","Nana & Toffee Loaf","Pain Au Raisin","Pancakes","PBJ Cupcake","Ring Donut","Salted Caramel Ganache","Sat Summers","School Cake","Smores Loaf","Sponge Cake","Sprinkle Sponge","STP Slice","Sticky Toffee Slice","Strawberry Donut","Strawberry Gateau","Vanilla Cupcake","Vegan Muffin","Vegan Pastry","Vegan Red Velvet","Victoria Sponge","Watermelon","White Choc & Rasberry Choc Cake","White Choc+Craneberry Tiffin","Yum Yums"],
+  "Breakfast":["Apple Juice","Bacon Bap","Breakfast Cereal","Cereal","Croissant","Danish Pastry","Egg Bap","Fried Egg","Fruit Juice","Grilled Cheese on Toast","Hash Browns","Jam Portion","Orange Juice","Pain au Chocolate","Quaker Original Porridge","Quaker Syrup","Sausage","Sausage Bap","Sausage Roll","Tea Cake Maris","Toast + Butter + Jam","Vegan Blueberry Croissant","Vegan Croissant","Vegan Sausage Bap","Vegan Sausage Roll","Veg Sausage","Yoghurt"],
+  "ChefsMenu":["Beef Stroganoff","Bombay Keema","Cheese Burger","Chicken & Leek Pie","Chicken and Chorizo Ragu","Chicken Burger","Chicken Parma","Cottage Pie","Katsu Chicken Stir Fry","Katsu Vegetable Stir Fry","Mushroom Stroganoff","Persian Cranberry Chicken","Persian Cranberry Vegetables","Punjabi Chicken Tikka","Punjabi Vegetable Tikka","Quorn Escollop Parma","Roast Chicken Dinner","Roast Veggie Dinner","Sausage and Mash","Spaghetti Bolognese","Sweet and Sour Chicken","Sweet and Sour Vegan","Vegan Bombay Keema","Vegan Burger","Vegan Escollop Parma","Vegan Sausage and Mash","Vegan Spaghetti Bolognese","Vegetable Burger","Vegetable Cottage Pie","Vegetable Ragu"],
+  "ConceptBar":["Chicken puttanesca","Chicken Tomato Gnocchi","Gnocchi Spinach Cream Sauce","Sausage Cassoulet","Spinach Velote","Veg puttanesca"],
+  "FacultyofFillings":["Beetroot & Quinoa","Cheese","Chicken Club Sandwich","Chicken Kiev","Coronation Chicken","Donner Kebab Wrap","Falafel","FOF Sandwich","Greek Salad Sandwich","Hummus & Roasted Vegetable","Italian Chicken","Jacket Potato 2 Fillings","Lattice Fries","Onion Bhaji","Panini 2 Fillings","Salad Meal","Soup of the Day","Southern Fried Chicken","Tuna Crunch"],
+  "Go Global":["BBQ Chicken Pizza","BBQ Oumph Salad","BBQ Oumph Wrap","Beef Burrito","Beef Nachos","Cheese & Tomato Vegan Pizza","Chicken Burrito","Chicken Katsu Curry","Chicken Nachos","Chicken Teriyaki Salad","Chicken Teriyaki Wrap","Chicken Tikka Salad","Chicken Tikka Wrap","Chicken Yeeros Pita","Chicken Yeeros Salad","Chicken Yeeros Wrap","Everyday Salad","Korean BBQ Chicken","Korean BBQ Chicken Salad","Korean BBQ Chicken Wrap","Korean BBQ Quorn","Korean BBQ Vegetable","Louisana BBQ Chicken Wrap","Louisana BBQ Chickn Salad","Margherita Pizza","Nachos","Pepperoni Pizza","Pepperoni Pizza Half","Piri Piri Chicken Salad","Piri Piri Chicken Wrap","Quorn Katsu Curry","Ras el Hanout Vegetable Salad","Ras el Hanout Vegetable Wrap","Spicy Sesame Chicken","Spicy Sesame Quorn","Sweet and Sour Quorn","Sweet Chilli Chicken Teriyaki","Teriyaki Quorn Wrap","Vegan Pizza","Vegan Pizza Half","Vegan Strip Tikka Wrap","Vegetable and Cheese Burrito"],
+  "HomeComforts":["Beef Tagine","Butter Chicken Curry","Butter Veg Curry","Chicken Cacciatore","Chicken Carbonara","Chicken Korma","Chicken Meatballs","Chilli con Carne","Creamy Pesto Chicken","Creamy Pesto Roasted Squash","Hungarian Beef Goulash","Hungarian Vegetable Goulash","Misc Off Menu Item","Morrocan Beef Tagine","Morrocan Mock Lamb Tagine","Morrocan Veg Tagine","Mushroom Carbonara","Sausage & Lentil Casserole","Sticky Korean BBQ Chicken","Sticky Korean BBQ Vegetables","Thai Green Chicken Curry","Thai Green Vegetable Curry","Veg Cacciatore","Vegan Chilli","Vegan Chilli Con Carne","Vegan Meatballs","Vegetable Korma","Vegetable Tagine","Veggie Sausage & Lentil Casserole"],
+  "Sides":["Ciabatta","Coleslaw","Cous Cous","Dumplings","Flatbread","Fries","Garlic Naan","Pasta","Poppadom","Prawn Cracker","Rice","Salad","Veg Spring Roll","Vegetables"],
+  "Snackademics":["American Hot Dog","Beef Empanadas","Buffalo Chicken Wings","Chick Pea and Red Pepper Taco","Chicken Satay Skewers","Chicken Wings","Chilli Relleno Cups","Crispy Salt n Pepper Aubergines","Dirty Fries","Mini Fish and Chips","Misc Snack Off Menu","Pancetta and Pea Arrancini","Quorn Wings","Salt n Pepper Pork Bites","Seekh Kebab","Shredded Plum Chicken Bao Bun","Spiced Chicken Taco","Spinach and Feta Borek Rolls","Sticky BBQ Sesame Ribs","Sweet Potato Bhaji","Tandoori Chicken Wrap","Veg Chilli Relleno Cups","Vegan Hot Dog","Vegan Spring Roll","Vegetable Samosa"],
+  "Sundry":["Baguette","Bao Bun","Baps","Breaded Chicken","Breaded Fillet","Breaded Fish","Breaded Halloumi","Brioche","Chicken","Chicken Diggers","Chicken Strips","Chicken Tikka","Chimichurri","Chix Meat Balls","Donner Meat","Egg Mayo","Egg Noodles","Egg Noodles With Veg","Feta Cheese","Fishless Finger","Garlic Mush","Green Beans","Haisun Noodles","Katsu Chix","Lamb Donner","Lentil Soup Vege","Malted Bloche","Malted Bloomer","Mexican Rice","Mushroom Mac Topper","Mushy Peas","New Pots","Noodles","Nutless Loaf","Panko Chicken","Peas","Plant Meat Balls","Potato","Red Cabbage","Sliced Cheese","Spinach","Sweet & Sour","Sweet & Sour Vegan Strips","Sweet Chilli Noodles","Tomato","Tuna","Tuna Mayo","Turmeric Rice","Vegan Fillet","Vegan Strips","Veg Loaded Topping","Warbur Bread","White Bloche","White Bloomer","Wok Noodles","Yorkshire Pudding"]
+};
+const DEFAULT_UNITS=['Dining Room','Kingsway','Queens Park','Riverside'];
+
+// ══ Storage keys ══════════════════════════════════════════════════════════
+const NOW=new Date();
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmt(d){return`${String(d.getDate()).padStart(2,'0')} ${MN[d.getMonth()]} ${d.getFullYear()}`}
+const TODAY=fmt(NOW);
+const WC=(()=>{const d=new Date(NOW);d.setDate(d.getDate()-((d.getDay()+6)%7));return fmt(d)})();
+
+const KEY_E=`fpl_entries_${TODAY}`;
+const KEY_C='fpl_carryovers';
+const KEY_MENU='fpl_menu_data';
+const KEY_MENU_META='fpl_menu_meta';
+const KEY_TOKEN='fpl_dbx_refresh_token';
+const DBX_CLIENT_ID='qvwulidiidvzzyj';
+const DBX_CLIENT_SECRET='c7korgjhcw6fhrv';
+
+// ══ State ═════════════════════════════════════════════════════════════════
+let entries=JSON.parse(localStorage.getItem(KEY_E)||'[]');
+let carryovers=JSON.parse(localStorage.getItem(KEY_C)||'[]');
+carryovers=carryovers.filter(c=>c.fromDate!==TODAY); saveC();
+let menuData={}, menuMeta=null;
+let editIdx=null, activeCarryIdx=null;
+let carryMode=false, eCarryMode=false, cCarryMode=false;
+
+function saveE(){localStorage.setItem(KEY_E,JSON.stringify(entries))}
+function saveC(){localStorage.setItem(KEY_C,JSON.stringify(carryovers))}
+
+// ══ Dropbox token ═════════════════════════════════════════════════════════
+function getRefreshToken(){return localStorage.getItem(KEY_TOKEN)||''}
+
+function saveToken(){
+  const t=document.getElementById('tokenInput').value.trim();
+  if(!t){toast('Please paste your refresh token first','info');return}
+  localStorage.setItem(KEY_TOKEN,t);
+  document.getElementById('tokenInput').value='';
+  updateTokenStatus();
+  toast('Dropbox connected ✓','dbx');
+}
+
+function clearToken(){
+  if(!confirm('Disconnect Dropbox? You will need to re-enter the token to upload again.'))return;
+  localStorage.removeItem(KEY_TOKEN);
+  updateTokenStatus();
+  toast('Dropbox disconnected','info');
+}
+
+function updateTokenStatus(){
+  const t=getRefreshToken();
+  const dot=document.getElementById('tokenDot');
+  const lbl=document.getElementById('tokenLabel');
+  const sub=document.getElementById('tokenSub');
+  const clearBtn=document.getElementById('clearTokenBtn');
+  const inputSec=document.getElementById('tokenInputSection');
+  const dbxBadge=document.getElementById('bdgDbx');
+  if(t){
+    dot.className='token-dot set';
+    lbl.textContent='Connected';
+    sub.textContent='Dropbox is ready — uploads will go to Apps/Food Production/';
+    clearBtn.style.display='block';
+    inputSec.style.display='none';
+    dbxBadge.classList.add('on');
+  } else {
+    dot.className='token-dot unset';
+    lbl.textContent='Not connected';
+    sub.textContent='Paste your refresh token below';
+    clearBtn.style.display='none';
+    inputSec.style.display='block';
+    dbxBadge.classList.remove('on');
+  }
+  renderBadges();
+}
+
+// Exchange refresh token for a short-lived access token
+async function getFreshAccessToken(){
+  const refreshToken=getRefreshToken();
+  if(!refreshToken)throw new Error('No refresh token stored');
+  const resp=await fetch('https://api.dropbox.com/oauth2/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({
+      grant_type:'refresh_token',
+      refresh_token:refreshToken,
+      client_id:DBX_CLIENT_ID,
+      client_secret:DBX_CLIENT_SECRET
+    })
+  });
+  if(!resp.ok){
+    const e=await resp.json().catch(()=>({}));
+    throw new Error(e.error_description||`Token refresh failed (${resp.status})`);
+  }
+  const data=await resp.json();
+  return data.access_token;
+}
+
+// ══ Menu data ══════════════════════════════════════════════════════════════
+function loadMenuData(){
+  const stored=localStorage.getItem(KEY_MENU);
+  if(stored){
+    try{menuData=JSON.parse(stored);menuMeta=JSON.parse(localStorage.getItem(KEY_MENU_META)||'null');return}
+    catch(e){}
+  }
+  menuData={};
+  DEFAULT_UNITS.forEach(u=>{menuData[u]={};Object.keys(DEFAULT_MENUS).forEach(m=>{menuData[u][m]=[...DEFAULT_MENUS[m]]})});
+  menuMeta={source:'Built-in defaults',imported:null};
+}
+
+function saveMenuData(){
+  localStorage.setItem(KEY_MENU,JSON.stringify(menuData));
+  localStorage.setItem(KEY_MENU_META,JSON.stringify(menuMeta));
+}
+
+function handleMenuImport(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const sheetName=wb.SheetNames.find(n=>n.trim().toLowerCase()==='menu data');
+      if(!sheetName){toast('Could not find "Menu Data" sheet','err');return}
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      let dataStart=0;
+      for(let i=0;i<Math.min(rows.length,5);i++){
+        const r=rows[i].map(c=>String(c).toLowerCase());
+        if(r.some(c=>c.includes('unit'))&&r.some(c=>c.includes('menu'))&&r.some(c=>c.includes('dish'))){dataStart=i+1;break}
+      }
+      const newData={};let count=0;
+      for(let i=dataStart;i<rows.length;i++){
+        const [unit,menu,dish]=rows[i].map(c=>String(c).trim());
+        if(!unit||!menu||!dish)continue;
+        if(!newData[unit])newData[unit]={};
+        if(!newData[unit][menu])newData[unit][menu]=[];
+        if(!newData[unit][menu].includes(dish)){newData[unit][menu].push(dish);count++}
+      }
+      if(!count){toast('No valid data found','err');return}
+      menuData=newData;
+      menuMeta={source:file.name,imported:new Date().toLocaleString('en-GB')};
+      saveMenuData();rebuildUnitDropdown();updateMenuStatus();
+      toast(`Menu updated — ${count} dishes loaded`,'ok');
+      switchTab('add');
+    }catch(err){toast('Could not read file','err');console.error(err)}
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+function resetToDefaults(){
+  if(!confirm('Reset to built-in defaults?'))return;
+  localStorage.removeItem(KEY_MENU);localStorage.removeItem(KEY_MENU_META);
+  loadMenuData();rebuildUnitDropdown();updateMenuStatus();
+  toast('Reset to built-in defaults','info');
+}
+
+function updateMenuStatus(){
+  const units=Object.keys(menuData);
+  let total=0;const allMenus=new Set();
+  units.forEach(u=>Object.keys(menuData[u]).forEach(m=>{allMenus.add(m);total+=menuData[u][m].length}));
+  document.getElementById('statusDishes').textContent=total.toLocaleString();
+  document.getElementById('statusMenus').textContent=allMenus.size;
+  document.getElementById('statusUnits').textContent=units.length;
+  const meta=menuMeta;
+  document.getElementById('statusDate').textContent=meta?.imported
+    ?`Last imported: ${meta.imported}`:`Source: ${meta?.source||'Built-in defaults'}`;
+  document.getElementById('menuDataSource').textContent=meta?.imported
+    ?`Updated ${meta.imported}`:'Using built-in defaults';
+}
+
+// ══ Dropdowns ═════════════════════════════════════════════════════════════
+function rebuildUnitDropdown(){
+  const sel=document.getElementById('unitSel');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Select unit…</option>';
+  Object.keys(menuData).sort().forEach(u=>{
+    const o=document.createElement('option');o.value=o.textContent=u;sel.appendChild(o);
+  });
+  if(prev&&menuData[prev])sel.value=prev;
+  updateMenus();
+}
+function updateMenus(){
+  const unit=document.getElementById('unitSel').value;
+  const mSel=document.getElementById('menuSel');
+  const dSel=document.getElementById('dishSel');
+  mSel.innerHTML='<option value="">Select menu…</option>';
+  dSel.innerHTML='<option value="">Select dish…</option>';
+  mSel.disabled=!unit;dSel.disabled=true;
+  if(!unit)return;
+  Object.keys(menuData[unit]||{}).sort().forEach(m=>{
+    const o=document.createElement('option');o.value=o.textContent=m;mSel.appendChild(o);
+  });
+}
+function updateDishes(){
+  const unit=document.getElementById('unitSel').value;
+  const menu=document.getElementById('menuSel').value;
+  const dSel=document.getElementById('dishSel');
+  dSel.innerHTML='<option value="">Select dish…</option>';
+  dSel.disabled=!menu;
+  if(!unit||!menu)return;
+  [...(menuData[unit]||{})[menu]||[]].sort().forEach(d=>{
+    const o=document.createElement('option');o.value=o.textContent=d;dSel.appendChild(o);
+  });
+}
+
+// ══ Tabs ══════════════════════════════════════════════════════════════════
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+}
+
+// ══ Date display ══════════════════════════════════════════════════════════
+document.getElementById('dateDisp').textContent=TODAY;
+document.getElementById('dayDisp').textContent=DAYS[NOW.getDay()];
+document.getElementById('hdrDate').textContent=`${DAYS[NOW.getDay()]}, ${TODAY}`;
+
+// ══ Add form ══════════════════════════════════════════════════════════════
+function adj(id,d){const el=document.getElementById(id);el.value=Math.max(0,(parseInt(el.value)||0)+d);recalc()}
+function setCarry(yes){
+  carryMode=yes;
+  document.getElementById('btnNo').className='rw-btn'+(yes?'':' aw');
+  document.getElementById('btnYes').className='rw-btn'+(yes?' ar':'');
+  document.getElementById('carryAmtWrap').classList.toggle('on',yes);
+  if(!yes)document.getElementById('reused').value=0;
+  recalc();
+}
+function recalc(){
+  const p=parseInt(document.getElementById('prod').value)||0;
+  const w=parseInt(document.getElementById('wasted').value)||0;
+  const r=carryMode?(parseInt(document.getElementById('reused').value)||0):0;
+  document.getElementById('lbox').classList.toggle('on',p>0);
+  document.getElementById('carryToggle').style.display=p>0?'block':'none';
+  document.getElementById('sumSold').textContent=p>0?Math.max(0,p-w-r):'—';
+  document.getElementById('sumWaste').textContent=w;
+  document.getElementById('sumReuse').textContent=r;
+  document.getElementById('sstrip').classList.toggle('on',p>0);
+  document.getElementById('h-wasted').classList.toggle('on',w>p);
+  document.getElementById('h-reused').classList.toggle('on',(w+r)>p);
+}
+
+// ══ Validation helpers ════════════════════════════════════════════════════
+function clrH(){
+  ['h-staff','h-unit','h-menu','h-dish','h-prod','h-wasted','h-reused']
+    .forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  ['staffName','unitSel','menuSel','dishSel','prod']
+    .forEach(id=>document.getElementById(id)?.classList.remove('err'));
+}
+const sh=id=>document.getElementById(id)?.classList.add('on');
+const mk=id=>document.getElementById(id)?.classList.add('err');
+
+// ══ Add entry ═════════════════════════════════════════════════════════════
+function addEntry(){
+  clrH();
+  const staff=document.getElementById('staffName').value.trim();
+  const unit=document.getElementById('unitSel').value;
+  const menu=document.getElementById('menuSel').value;
+  const dish=document.getElementById('dishSel').value;
+  const produced=parseInt(document.getElementById('prod').value)||0;
+  const wasted=parseInt(document.getElementById('wasted').value)||0;
+  const reused=carryMode?(parseInt(document.getElementById('reused').value)||0):0;
+  const comments=document.getElementById('cmts').value.trim();
+  let ok=true;
+  if(!staff){sh('h-staff');mk('staffName');ok=false}
+  if(!unit){sh('h-unit');mk('unitSel');ok=false}
+  if(!menu){sh('h-menu');mk('menuSel');ok=false}
+  if(!dish){sh('h-dish');mk('dishSel');ok=false}
+  if(produced<1){sh('h-prod');mk('prod');ok=false}
+  if(wasted>produced){sh('h-wasted');ok=false}
+  if((wasted+reused)>produced){sh('h-reused');ok=false}
+  if(!ok)return;
+  const sold=produced-wasted-reused;
+  const wr=produced>0?Math.round((wasted/produced)*100):0;
+  const wastePending=produced>0&&wasted===0&&!carryMode;
+  let autoComment=comments;
+  if(reused>0)autoComment=(autoComment?autoComment+'. ':'')+`Reused: ${reused} portions carried to next day`;
+  const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  entries.push({date:TODAY,weekCommencing:WC,unit,menu,dish,produced,wasted,sold,reused,wasteRate:wr,comments:autoComment,staff,time,wastePending});
+  saveE();
+  if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused});saveC()}
+  renderAll();
+  if(wastePending)toast(`${dish} added — add waste after service`,'info');
+  else if(reused>0)toast(`${dish} logged — 🔄 carry-over set for tomorrow`,'teal');
+  else toast(`${dish} added ✓`,'ok');
+  document.getElementById('prod').value=0;
+  document.getElementById('wasted').value=0;
+  document.getElementById('reused').value=0;
+  document.getElementById('cmts').value='';
+  carryMode=false;
+  document.getElementById('btnNo').className='rw-btn';
+  document.getElementById('btnYes').className='rw-btn';
+  document.getElementById('carryAmtWrap').classList.remove('on');
+  document.getElementById('lbox').classList.remove('on');
+  document.getElementById('sstrip').classList.remove('on');
+  switchTab('log');
+}
+
+// ══ Render ════════════════════════════════════════════════════════════════
+const pc=()=>entries.filter(e=>e.wastePending).length;
+function renderAll(){renderCarryovers();renderEntries();renderBadges()}
+function renderBadges(){
+  const n=entries.length,p=pc(),cc=carryovers.length;
+  document.getElementById('bdgCnt').textContent=`${n} entr${n===1?'y':'ies'}`;
+  document.getElementById('bdgCnt').classList.toggle('on',n>0);
+  document.getElementById('bdgPendN').textContent=p;
+  document.getElementById('bdgPend').classList.toggle('on',p>0);
+  document.getElementById('bdgCarryN').textContent=cc;
+  document.getElementById('bdgCarry').classList.toggle('on',cc>0);
+  const pip=document.getElementById('pipPend'),tot=p+cc;
+  pip.textContent=tot;pip.className='tab-pip'+(tot>0?' on'+(p===0?' teal':''):'');
+  // Upload button state
+  const hasToken=!!getRefreshToken();
+  const dbxBtn=document.getElementById('dbxBtn');
+  dbxBtn.disabled=n===0||!hasToken;
+  document.getElementById('noTokenWarn').classList.toggle('on',!hasToken&&n>0);
+}
+function renderCarryovers(){
+  const sec=document.getElementById('carrySection');
+  if(!carryovers.length){sec.style.display='none';return}
+  sec.style.display='block';
+  document.getElementById('carryList').innerHTML=carryovers.map((c,i)=>`
+    <div class="carry-card" onclick="openCarryModal(${i})">
+      <div class="carry-top">
+        <div class="carry-dot"></div>
+        <div class="carry-body">
+          <div class="carry-dish">${c.dish}</div>
+          <div class="carry-meta">${c.unit} · ${c.menu} · from ${c.fromDate}</div>
+        </div>
+        <div class="carry-right">
+          <div class="carry-amt">🔄 ×${c.reusedAmt}</div>
+          <div class="carry-hint-lbl">tap to log</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function renderEntries(){
+  const n=entries.length,p=pc();
+  document.getElementById('tallyPill').textContent=`${n} entr${n===1?'y':'ies'}`;
+  document.getElementById('pendCard').style.display=p>0?'block':'none';
+  document.getElementById('dlPendN').textContent=p;
+  document.getElementById('dlNote').style.display=p>0?'block':'none';
+  const el=document.getElementById('eList');
+  if(!n){el.innerHTML='<div class="empty">No entries yet — go to ➕ Add Entry to start</div>';return}
+  el.innerHTML=[...entries].reverse().map((e,ri)=>{
+    const i=entries.length-1-ri;
+    const wT=!e.wastePending&&e.wasted>0?`<span class="tag w">−${e.wasted}</span>`:'';
+    const rT=e.reused>0?`<span class="tag r">🔄${e.reused}</span>`:'';
+    const st=e.wastePending?`<span class="tag pend">⚠️ Pending</span>`:`<span class="tag ok">✓ Done</span>`;
+    // Carry-over entries show differently — no produced count, show carry-over badge instead
+    const prodTag=e.isCarryOver
+      ?`<span class="tag r">🔄 Carry-over</span>`
+      :`<span class="tag p">×${e.produced}</span>`;
+    return`<div class="erow ${e.wastePending?'pend':'done'}" onclick="openEdit(${i})">
+      <div class="edot"></div>
+      <div class="ebody">
+        <div class="edish">${e.dish}</div>
+        <div class="emeta">${e.unit} · ${e.menu} · <em>${e.staff}</em> · ${e.time}</div>
+      </div>
+      <div class="eright">
+        <div class="etags">${prodTag}${wT}${rT}</div>
+        ${st}<div class="edit-hint">tap to edit</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══ Build xlsx in memory ══════════════════════════════════════════════════
+function buildXlsx(){
+  const headers=['Date','Week Commencing','Unit/Kitchen','Menu','Dish Name',
+    'Portions Produced','Portions Wasted','Portions Sold','Waste %','Comments','Logged By'];
+  const rows=entries.map(e=>[
+    e.date, e.weekCommencing, e.unit, e.menu, e.dish,
+    e.isCarryOver ? 0 : e.produced,  // carry-overs don't add to produced total
+    e.wasted,
+    e.sold,
+    e.wasteRate,
+    e.comments,
+    e.staff
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=[{wch:14},{wch:16},{wch:14},{wch:18},{wch:30},{wch:17},{wch:15},{wch:14},{wch:9},{wch:40},{wch:14}];
+  const yellow={patternType:'solid',fgColor:{rgb:'FFFDE7'},bgColor:{rgb:'FFFDE7'}};
+  const teal={patternType:'solid',fgColor:{rgb:'F0FDFA'},bgColor:{rgb:'F0FDFA'}};
+  entries.forEach((e,i)=>{
+    if(e.wastePending){
+      headers.forEach((_,c)=>{
+        const a=XLSX.utils.encode_cell({r:i+1,c});
+        if(!ws[a])ws[a]={v:'',t:'s'};ws[a].s={fill:yellow};
+      });
+    } else if(e.isCarryOver){
+      // Teal highlight for carry-over rows so manager can spot them easily
+      headers.forEach((_,c)=>{
+        const a=XLSX.utils.encode_cell({r:i+1,c});
+        if(!ws[a])ws[a]={v:'',t:'s'};ws[a].s={fill:teal};
+      });
+    }
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Daily Log');
+  return XLSX.write(wb,{bookType:'xlsx',type:'array'});
+}
+
+// ══ Dropbox upload ════════════════════════════════════════════════════════
+async function doUpload(){
+  if(!getRefreshToken()){toast('No Dropbox token — go to Settings','err');return}
+  if(!entries.length){toast('No entries to upload','info');return}
+
+  const unitName=entries[0].unit.replace(/\s+/g,'-');
+  const df=`${String(NOW.getDate()).padStart(2,'0')}-${String(NOW.getMonth()+1).padStart(2,'0')}-${NOW.getFullYear()}`;
+  const filename=`Production-Log-${unitName}-${df}.xlsx`;
+  // App folder path — with App folder access the root is the app folder itself
+  const dropboxPath=`/${filename}`;
+
+  const btn=document.getElementById('dbxBtn');
+  btn.disabled=true;
+  document.getElementById('dbxBtnIcon').outerHTML='<div class="spinner" id="dbxBtnIcon"></div>';
+  document.getElementById('dbxBtnText').textContent='Uploading…';
+
+  try{
+    // Get a fresh short-lived access token using the permanent refresh token
+    const accessToken=await getFreshAccessToken();
+
+    const xlsxData=buildXlsx();
+    const blob=new Blob([xlsxData],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+    const response=await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${accessToken}`,
+        'Dropbox-API-Arg':JSON.stringify({
+          path:dropboxPath,
+          mode:'overwrite',
+          autorename:false,
+          mute:false
+        }),
+        'Content-Type':'application/octet-stream'
+      },
+      body:blob
+    });
+
+    if(response.ok){
+      const p=pc();
+      toast(p>0
+        ?`Uploaded to Dropbox ✓ — ${p} entr${p===1?'y':'ies'} still pending`
+        :`Uploaded to Dropbox ✓ — ${entries.length} entr${entries.length===1?'y':'ies'}`
+      ,'dbx');
+    } else {
+      const err=await response.json().catch(()=>({}));
+      toast(`Upload failed (${response.status}) — try again`,'err');
+      console.error('Dropbox upload error:',err);
+    }
+  } catch(err){
+    toast(err.message||'Upload failed — check your internet connection','err');
+    console.error(err);
+  } finally {
+    btn.disabled=false;
+    document.getElementById('dbxBtnIcon').outerHTML='<span id="dbxBtnIcon">📦</span>';
+    document.getElementById('dbxBtnText').textContent='Send to Dropbox';
+    renderBadges();
+  }
+}
+
+// ══ Edit modal ════════════════════════════════════════════════════════════
+function openEdit(idx){
+  editIdx=idx;eCarryMode=false;
+  const e=entries[idx];
+  document.getElementById('editTitle').textContent=e.wastePending?'⚠️ Add Waste':'✏️ Edit Entry';
+  document.getElementById('editInfo').innerHTML=`<strong>${e.dish}</strong>${e.unit} · ${e.menu} · ${e.time} · ${e.staff}`;
+  document.getElementById('eProd').value=e.produced;
+  document.getElementById('eWasted').value=e.wasted;
+  document.getElementById('eReused').value=0;
+  document.getElementById('eCmts').value=e.comments;
+  document.getElementById('eBtnNo').className='rw-btn';
+  document.getElementById('eBtnYes').className='rw-btn';
+  document.getElementById('eCarryWrap').classList.remove('on');
+  ['h-eProd','h-eWasted','h-eReused'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  recalcE();
+  document.getElementById('editOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeEditDirect(){document.getElementById('editOverlay').classList.remove('on');document.body.style.overflow='';editIdx=null}
+function closeEdit(ev){if(ev.target===document.getElementById('editOverlay'))closeEditDirect()}
+function adjE(id,d){const el=document.getElementById(id);el.value=Math.max(0,(parseInt(el.value)||0)+d);recalcE()}
+function setCarryE(yes){
+  eCarryMode=yes;
+  document.getElementById('eBtnNo').className='rw-btn'+(yes?'':' aw');
+  document.getElementById('eBtnYes').className='rw-btn'+(yes?' ar':'');
+  document.getElementById('eCarryWrap').classList.toggle('on',yes);
+  if(!yes)document.getElementById('eReused').value=0;
+  recalcE();
+}
+function recalcE(){
+  const p=parseInt(document.getElementById('eProd').value)||0;
+  const w=parseInt(document.getElementById('eWasted').value)||0;
+  const r=eCarryMode?(parseInt(document.getElementById('eReused').value)||0):0;
+  document.getElementById('eSumSold').textContent=p>0?Math.max(0,p-w-r):'—';
+  document.getElementById('eSumWaste').textContent=w;
+  document.getElementById('eSumReuse').textContent=r;
+  document.getElementById('h-eWasted').classList.toggle('on',w>p);
+  document.getElementById('h-eReused').classList.toggle('on',(w+r)>p);
+}
+function saveEdit(){
+  if(editIdx===null)return;
+  const p=parseInt(document.getElementById('eProd').value)||0;
+  const w=parseInt(document.getElementById('eWasted').value)||0;
+  const r=eCarryMode?(parseInt(document.getElementById('eReused').value)||0):0;
+  if(p<1){sh('h-eProd');return}
+  if(w>p){sh('h-eWasted');return}
+  if((w+r)>p){sh('h-eReused');return}
+  const sold=p-w-r;
+  const wr=p>0?Math.round((w/p)*100):0;
+  let comments=document.getElementById('eCmts').value.trim();
+  if(r>0)comments=(comments?comments+'. ':'')+`Reused: ${r} portions carried to next day`;
+  entries[editIdx]={...entries[editIdx],produced:p,wasted:w,sold,reused:r,wasteRate:wr,comments,wastePending:false};
+  saveE();
+  if(r>0){carryovers.push({fromDate:TODAY,unit:entries[editIdx].unit,menu:entries[editIdx].menu,dish:entries[editIdx].dish,reusedAmt:r});saveC()}
+  renderAll();closeEditDirect();
+  toast(r>0?'Updated — 🔄 carry-over set for tomorrow':'Entry updated ✓',r>0?'teal':'ok');
+}
+
+// ══ Carry modal ═══════════════════════════════════════════════════════════
+function openCarryModal(idx){
+  activeCarryIdx=idx;cCarryMode=false;
+  const c=carryovers[idx];
+  document.getElementById('cFromDate').textContent=c.fromDate;
+  document.getElementById('cInfo').innerHTML=`<strong>${c.dish}</strong>${c.unit} · ${c.menu} · ${c.reusedAmt} portions carried over`;
+  document.getElementById('cStaff').value=document.getElementById('staffName').value||'';
+  ['cProd','cWasted','cReused'].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById('cCmts').value='';
+  document.getElementById('cBtnNo').className='rw-btn';
+  document.getElementById('cBtnYes').className='rw-btn';
+  document.getElementById('cCarryWrap').classList.remove('on');
+  ['h-cStaff','h-cProd','h-cWasted','h-cReused'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  recalcC();
+  document.getElementById('carryOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeCarryDirect(){document.getElementById('carryOverlay').classList.remove('on');document.body.style.overflow='';activeCarryIdx=null}
+function closeCarry(ev){if(ev.target===document.getElementById('carryOverlay'))closeCarryDirect()}
+function adjC(id,d){const el=document.getElementById(id);el.value=Math.max(0,(parseInt(el.value)||0)+d);recalcC()}
+function setCarryC(yes){
+  cCarryMode=yes;
+  document.getElementById('cBtnNo').className='rw-btn'+(yes?'':' aw');
+  document.getElementById('cBtnYes').className='rw-btn'+(yes?' ar':'');
+  document.getElementById('cCarryWrap').classList.toggle('on',yes);
+  if(!yes)document.getElementById('cReused').value=0;
+  recalcC();
+}
+function recalcC(){
+  const p=parseInt(document.getElementById('cProd').value)||0;
+  const w=parseInt(document.getElementById('cWasted').value)||0;
+  const r=cCarryMode?(parseInt(document.getElementById('cReused').value)||0):0;
+  document.getElementById('cSumSold').textContent=p>0?Math.max(0,p-w-r):'—';
+  document.getElementById('cSumWaste').textContent=w;
+  document.getElementById('cSumReuse').textContent=r;
+  document.getElementById('h-cWasted').classList.toggle('on',w>p);
+  document.getElementById('h-cReused').classList.toggle('on',(w+r)>p);
+}
+function confirmCarry(){
+  if(activeCarryIdx===null)return;
+  const c=carryovers[activeCarryIdx];
+  const staff=document.getElementById('cStaff').value.trim();
+  const available=parseInt(document.getElementById('cProd').value)||0; // portions available from carry-over
+  const w=parseInt(document.getElementById('cWasted').value)||0;
+  const r=cCarryMode?(parseInt(document.getElementById('cReused').value)||0):0;
+  let ok=true;
+  if(!staff){sh('h-cStaff');ok=false}
+  if(available<1){sh('h-cProd');ok=false}
+  if(w>available){sh('h-cWasted');ok=false}
+  if((w+r)>available){sh('h-cReused');ok=false}
+  if(!ok)return;
+  const sold=available-w-r;
+  // Waste rate based on available carry-over portions, not new production
+  const wr=available>0?Math.round((w/available)*100):0;
+  let comments=document.getElementById('cCmts').value.trim();
+  // Record the full picture in comments — produced is set to 0 so nothing is double counted
+  comments=(comments?comments+'. ':'')+`Carry-over from ${c.fromDate}: ${available} portions available, ${sold} sold, ${w} wasted`;
+  if(r>0)comments+=`, ${r} carried to next day`;
+  const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  entries.push({
+    date:TODAY,weekCommencing:WC,unit:c.unit,menu:c.menu,dish:c.dish,
+    produced:0,       // not new production — already counted on Day 1
+    wasted:w,
+    sold,
+    reused:r,
+    wasteRate:wr,
+    comments,
+    staff,
+    time,
+    wastePending:false,
+    isCarryOver:true  // flag so we can display it differently
+  });
+  saveE();
+  carryovers.splice(activeCarryIdx,1);
+  if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r});
+  saveC();renderAll();closeCarryDirect();
+  toast(`${c.dish} logged from carry-over ✓`,'ok');
+}
+
+// ══ Toast ═════════════════════════════════════════════════════════════════
+let tt;
+function toast(msg,type='ok'){
+  const icons={ok:'✅',err:'❌',dbx:'📦',info:'⚠️',teal:'🔄'};
+  const el=document.getElementById('tst');
+  el.className=`toast ${type}`;el.innerHTML=`${icons[type]||''} ${msg}`;el.classList.add('on');
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),3500);
+}
+
+// ══ Init ══════════════════════════════════════════════════════════════════
+loadMenuData();
+rebuildUnitDropdown();
+updateMenuStatus();
+updateTokenStatus();
+renderAll();
+</script>
+</body>
+</html>
