@@ -151,7 +151,7 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .search-clear.on{display:flex}
 .search-results{position:absolute;top:calc(100% - 1px);left:0;right:0;
   background:var(--surf);border-radius:0 0 var(--r) var(--r);
-  box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto;display:none}
+  box-shadow:var(--shadow-m);z-index:100;max-height:440px;overflow-y:auto;display:none}
 .search-results.on{display:block}
 .search-result-item{padding:11px 16px;border-bottom:1px solid var(--sep);cursor:pointer;
   display:flex;align-items:center;gap:10px;transition:background .1s}
@@ -182,8 +182,12 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .step-btn.minus{background:var(--red-l);color:var(--red)}
 .step-btn.plus{background:var(--blue-l);color:var(--blue)}
 .step-btn:active{opacity:.7}
-.step-val{min-width:44px;text-align:center;font-size:20px;font-weight:700;
-  font-family:'Nunito',sans-serif;color:var(--text)}
+.step-val{min-width:44px;max-width:70px;text-align:center;font-size:20px;font-weight:700;
+  font-family:'Nunito',sans-serif;color:var(--text);
+  border:none;background:none;outline:none;padding:4px 2px;border-radius:8px;
+  -webkit-appearance:none;-moz-appearance:textfield;appearance:none}
+.step-val::-webkit-outer-spin-button,.step-val::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.step-val:focus{background:var(--blue-l)}
 
 /* ── Carry toggle ── */
 .carry-section{padding:12px 16px;border-bottom:1px solid var(--sep)}
@@ -195,6 +199,19 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
   background:var(--surf2);color:var(--text3);transition:all .15s;user-select:none}
 .carry-opt.sel-no{background:var(--red-l);border-color:rgba(255,59,48,.25);color:var(--red)}
 .carry-opt.sel-yes{background:var(--teal-l);border-color:rgba(90,200,250,.3);color:#0a84ff}
+
+/* ── Confirm no-waste toggle ── */
+.confirm-section{padding:10px 16px;border-bottom:1px solid var(--sep)}
+.confirm-section:last-child{border-bottom:none}
+.confirm-toggle{display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:10px;
+  border:1.5px solid var(--surf3);background:var(--surf2);color:var(--text3);
+  font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
+.confirm-toggle.active{background:var(--green-l);border-color:rgba(52,199,89,.3);color:var(--green)}
+.confirm-toggle.disabled{opacity:.4;cursor:not-allowed}
+.nw-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--text4);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s}
+.confirm-toggle.active .nw-dot{background:var(--green);border-color:var(--green)}
+.confirm-toggle.active .nw-dot::after{content:'✓'}
 
 /* ── Summary strip ── */
 .sum-strip{display:none;padding:12px 16px;gap:8px}
@@ -479,7 +496,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
         </div>
         <div class="stepper">
           <button class="step-btn minus" ontouchstart="" onclick="adj('prod',-1)">−</button>
-          <div class="step-val" id="prodVal">0</div>
+          <input class="step-val" id="prodVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+            onfocus="this.select()" oninput="inp('prod',this)" onblur="inpDone('prod',this)" onkeydown="if(event.key==='Enter')this.blur()">
           <button class="step-btn plus" ontouchstart="" onclick="adj('prod',1)">+</button>
         </div>
       </div>
@@ -499,11 +517,18 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
           </div>
           <div class="stepper">
             <button class="step-btn minus" ontouchstart="" onclick="adj('wasted',-1)">−</button>
-            <div class="step-val" id="wastedVal">0</div>
+            <input class="step-val" id="wastedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+              onfocus="this.select()" oninput="inp('wasted',this)" onblur="inpDone('wasted',this)" onkeydown="if(event.key==='Enter')this.blur()">
             <button class="step-btn plus" ontouchstart="" onclick="adj('wasted',1)">+</button>
           </div>
         </div>
         <div class="hint" id="h-wasted">Cannot exceed portions produced.</div>
+        <div class="confirm-section" id="confirmSection">
+          <div class="confirm-toggle" id="btnNoWaste" onclick="toggleNoWaste()">
+            <span class="nw-dot"></span>
+            <span>Confirm — No Waste (fully sold out)</span>
+          </div>
+        </div>
         <div class="carry-section">
           <div class="carry-section-label">Any portions carried over to tomorrow?</div>
           <div class="carry-toggle">
@@ -519,7 +544,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
             </div>
             <div class="stepper">
               <button class="step-btn minus" ontouchstart="" onclick="adj('reused',-1)">−</button>
-              <div class="step-val" id="reusedVal">0</div>
+              <input class="step-val" id="reusedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+                onfocus="this.select()" oninput="inp('reused',this)" onblur="inpDone('reused',this)" onkeydown="if(event.key==='Enter')this.blur()">
               <button class="step-btn plus" ontouchstart="" onclick="adj('reused',1)">+</button>
             </div>
           </div>
@@ -685,7 +711,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
         <div class="stepper-label">Portions Produced</div>
         <div class="stepper">
           <button class="step-btn minus" ontouchstart="" onclick="adjE('eProd',-1)">−</button>
-          <div class="step-val" id="eProdVal">0</div>
+          <input class="step-val" id="eProdVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+            onfocus="this.select()" oninput="inpE('eProd',this)" onblur="inpEDone('eProd',this)" onkeydown="if(event.key==='Enter')this.blur()">
           <button class="step-btn plus" ontouchstart="" onclick="adjE('eProd',1)">+</button>
         </div>
       </div>
@@ -695,11 +722,18 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
         <div class="stepper-label">Portions Wasted</div>
         <div class="stepper">
           <button class="step-btn minus" ontouchstart="" onclick="adjE('eWasted',-1)">−</button>
-          <div class="step-val" id="eWastedVal">0</div>
+          <input class="step-val" id="eWastedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+            onfocus="this.select()" oninput="inpE('eWasted',this)" onblur="inpEDone('eWasted',this)" onkeydown="if(event.key==='Enter')this.blur()">
           <button class="step-btn plus" ontouchstart="" onclick="adjE('eWasted',1)">+</button>
         </div>
       </div>
       <div class="hint" id="h-eWasted">Cannot exceed produced.</div>
+      <div class="confirm-section" id="confirmSectionE" style="border-bottom:1px solid var(--sep)">
+        <div class="confirm-toggle" id="eBtnNoWaste" onclick="toggleNoWasteE()">
+          <span class="nw-dot"></span>
+          <span>Confirm — No Waste (fully sold out)</span>
+        </div>
+      </div>
       <div class="carry-section" style="border-bottom:1px solid var(--sep)">
         <div class="carry-section-label">Any carried over to tomorrow?</div>
         <div class="carry-toggle">
@@ -712,7 +746,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
           <div class="stepper-label">Portions carried over</div>
           <div class="stepper">
             <button class="step-btn minus" ontouchstart="" onclick="adjE('eReused',-1)">−</button>
-            <div class="step-val" id="eReusedVal">0</div>
+            <input class="step-val" id="eReusedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+              onfocus="this.select()" oninput="inpE('eReused',this)" onblur="inpEDone('eReused',this)" onkeydown="if(event.key==='Enter')this.blur()">
             <button class="step-btn plus" ontouchstart="" onclick="adjE('eReused',1)">+</button>
           </div>
         </div>
@@ -756,7 +791,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
         </div>
         <div class="stepper">
           <button class="step-btn minus" ontouchstart="" onclick="adjC('cProd',-1)">−</button>
-          <div class="step-val" id="cProdVal">0</div>
+          <input class="step-val" id="cProdVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+            onfocus="this.select()" oninput="inpC('cProd',this)" onblur="inpCDone('cProd',this)" onkeydown="if(event.key==='Enter')this.blur()">
           <button class="step-btn plus" ontouchstart="" onclick="adjC('cProd',1)">+</button>
         </div>
       </div>
@@ -766,11 +802,18 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
         <div class="stepper-label">Portions Wasted</div>
         <div class="stepper">
           <button class="step-btn minus" ontouchstart="" onclick="adjC('cWasted',-1)">−</button>
-          <div class="step-val" id="cWastedVal">0</div>
+          <input class="step-val" id="cWastedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+            onfocus="this.select()" oninput="inpC('cWasted',this)" onblur="inpCDone('cWasted',this)" onkeydown="if(event.key==='Enter')this.blur()">
           <button class="step-btn plus" ontouchstart="" onclick="adjC('cWasted',1)">+</button>
         </div>
       </div>
       <div class="hint" id="h-cWasted">Cannot exceed available.</div>
+      <div class="confirm-section" id="confirmSectionC" style="border-bottom:1px solid var(--sep)">
+        <div class="confirm-toggle" id="cBtnNoWaste" onclick="toggleNoWasteC()">
+          <span class="nw-dot"></span>
+          <span>Confirm — No Waste (fully sold out)</span>
+        </div>
+      </div>
       <div class="carry-section" style="border-bottom:1px solid var(--sep)">
         <div class="carry-section-label">Carried over again tomorrow?</div>
         <div class="carry-toggle">
@@ -783,7 +826,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
           <div class="stepper-label">Portions carried over</div>
           <div class="stepper">
             <button class="step-btn minus" ontouchstart="" onclick="adjC('cReused',-1)">−</button>
-            <div class="step-val" id="cReusedVal">0</div>
+            <input class="step-val" id="cReusedVal" type="text" inputmode="numeric" pattern="[0-9]*" value="0"
+              onfocus="this.select()" oninput="inpC('cReused',this)" onblur="inpCDone('cReused',this)" onkeydown="if(event.key==='Enter')this.blur()">
             <button class="step-btn plus" ontouchstart="" onclick="adjC('cReused',1)">+</button>
           </div>
         </div>
@@ -839,14 +883,13 @@ const DBX_CLIENT_SECRET='c7korgjhcw6fhrv';
 // ══ State ═════════════════════════════════════════════════════════════════
 let entries=JSON.parse(localStorage.getItem(KEY_E)||'[]');
 let carryovers=JSON.parse(localStorage.getItem(KEY_C)||'[]');
-// Only show carry-overs from previous days as reminders — don't delete same-day ones from storage
 let menuData={},menuMeta=null;
 let editIdx=null,activeCarryIdx=null;
 let carryMode=false,eCarryMode=false,cCarryMode=false;
 // Stepper values
-let prodV=0,wastedV=0,reusedV=0;
-let eProdV=0,eWastedV=0,eReusedV=0;
-let cProdV=0,cWastedV=0,cReusedV=0;
+let prodV=0,wastedV=0,reusedV=0,noWasteV=false;
+let eProdV=0,eWastedV=0,eReusedV=0,eNoWasteV=false;
+let cProdV=0,cWastedV=0,cReusedV=0,cNoWasteV=false;
 
 function saveE(){localStorage.setItem(KEY_E,JSON.stringify(entries))}
 function saveC(){localStorage.setItem(KEY_C,JSON.stringify(carryovers))}
@@ -1044,9 +1087,9 @@ function selectDish(menu,dish){
   // Scroll to portions
   document.getElementById('afterServiceSection').style.display='none';
   prodV=0;wastedV=0;reusedV=0;
-  document.getElementById('prodVal').textContent=0;
-  document.getElementById('wastedVal').textContent=0;
-  document.getElementById('reusedVal').textContent=0;
+  document.getElementById('prodVal').value=0;
+  document.getElementById('wastedVal').value=0;
+  document.getElementById('reusedVal').value=0;
 }
 
 function clearSearch(){
@@ -1077,22 +1120,58 @@ document.getElementById('hdrDate').textContent=`${DAYS[NOW.getDay()]}, ${TODAY}`
 
 // ══ Steppers ══════════════════════════════════════════════════════════════
 function adj(id,delta){
-  if(id==='prod'){prodV=Math.max(0,prodV+delta);document.getElementById('prodVal').textContent=prodV}
-  if(id==='wasted'){wastedV=Math.max(0,wastedV+delta);document.getElementById('wastedVal').textContent=wastedV}
-  if(id==='reused'){reusedV=Math.max(0,reusedV+delta);document.getElementById('reusedVal').textContent=reusedV}
+  if(id==='prod'){prodV=Math.max(0,prodV+delta);document.getElementById('prodVal').value=prodV}
+  if(id==='wasted'){wastedV=Math.max(0,wastedV+delta);document.getElementById('wastedVal').value=wastedV}
+  if(id==='reused'){reusedV=Math.max(0,reusedV+delta);document.getElementById('reusedVal').value=reusedV}
   recalc();
 }
 function adjE(id,delta){
-  if(id==='eProd'){eProdV=Math.max(0,eProdV+delta);document.getElementById('eProdVal').textContent=eProdV}
-  if(id==='eWasted'){eWastedV=Math.max(0,eWastedV+delta);document.getElementById('eWastedVal').textContent=eWastedV}
-  if(id==='eReused'){eReusedV=Math.max(0,eReusedV+delta);document.getElementById('eReusedVal').textContent=eReusedV}
+  if(id==='eProd'){eProdV=Math.max(0,eProdV+delta);document.getElementById('eProdVal').value=eProdV}
+  if(id==='eWasted'){eWastedV=Math.max(0,eWastedV+delta);document.getElementById('eWastedVal').value=eWastedV}
+  if(id==='eReused'){eReusedV=Math.max(0,eReusedV+delta);document.getElementById('eReusedVal').value=eReusedV}
   recalcE();
 }
 function adjC(id,delta){
-  if(id==='cProd'){cProdV=Math.max(0,cProdV+delta);document.getElementById('cProdVal').textContent=cProdV}
-  if(id==='cWasted'){cWastedV=Math.max(0,cWastedV+delta);document.getElementById('cWastedVal').textContent=cWastedV}
-  if(id==='cReused'){cReusedV=Math.max(0,cReusedV+delta);document.getElementById('cReusedVal').textContent=cReusedV}
+  if(id==='cProd'){cProdV=Math.max(0,cProdV+delta);document.getElementById('cProdVal').value=cProdV}
+  if(id==='cWasted'){cWastedV=Math.max(0,cWastedV+delta);document.getElementById('cWastedVal').value=cWastedV}
+  if(id==='cReused'){cReusedV=Math.max(0,cReusedV+delta);document.getElementById('cReusedVal').value=cReusedV}
   recalcC();
+}
+
+// ══ Typed entry (alongside +/- buttons) ═════════════════════════════════════
+function parseStepInput(raw){
+  const v=parseInt(String(raw).replace(/[^0-9]/g,''),10);
+  return isNaN(v)||v<0?0:v;
+}
+function inp(id,el){
+  const v=parseStepInput(el.value);
+  if(id==='prod')prodV=v;
+  if(id==='wasted')wastedV=v;
+  if(id==='reused')reusedV=v;
+  recalc();
+}
+function inpDone(id,el){
+  el.value=id==='prod'?prodV:id==='wasted'?wastedV:reusedV;
+}
+function inpE(id,el){
+  const v=parseStepInput(el.value);
+  if(id==='eProd')eProdV=v;
+  if(id==='eWasted')eWastedV=v;
+  if(id==='eReused')eReusedV=v;
+  recalcE();
+}
+function inpEDone(id,el){
+  el.value=id==='eProd'?eProdV:id==='eWasted'?eWastedV:eReusedV;
+}
+function inpC(id,el){
+  const v=parseStepInput(el.value);
+  if(id==='cProd')cProdV=v;
+  if(id==='cWasted')cWastedV=v;
+  if(id==='cReused')cReusedV=v;
+  recalcC();
+}
+function inpCDone(id,el){
+  el.value=id==='cProd'?cProdV:id==='cWasted'?cWastedV:cReusedV;
 }
 
 // ══ Carry toggle ══════════════════════════════════════════════════════════
@@ -1101,7 +1180,7 @@ function setCarry(yes){
   document.getElementById('btnNo').className='carry-opt'+(yes?'':' sel-no');
   document.getElementById('btnYes').className='carry-opt'+(yes?' sel-yes':'');
   document.getElementById('carryAmtSection').style.display=yes?'block':'none';
-  if(!yes){reusedV=0;document.getElementById('reusedVal').textContent=0}
+  if(!yes){reusedV=0;document.getElementById('reusedVal').value=0}
   recalc();
 }
 function setCarryE(yes){
@@ -1109,7 +1188,7 @@ function setCarryE(yes){
   document.getElementById('eBtnNo').className='carry-opt'+(yes?'':' sel-no');
   document.getElementById('eBtnYes').className='carry-opt'+(yes?' sel-yes':'');
   document.getElementById('eCarryAmt').style.display=yes?'block':'none';
-  if(!yes){eReusedV=0;document.getElementById('eReusedVal').textContent=0}
+  if(!yes){eReusedV=0;document.getElementById('eReusedVal').value=0}
   recalcE();
 }
 function setCarryC(yes){
@@ -1117,13 +1196,51 @@ function setCarryC(yes){
   document.getElementById('cBtnNo').className='carry-opt'+(yes?'':' sel-no');
   document.getElementById('cBtnYes').className='carry-opt'+(yes?' sel-yes':'');
   document.getElementById('cCarryAmt').style.display=yes?'block':'none';
-  if(!yes){cReusedV=0;document.getElementById('cReusedVal').textContent=0}
+  if(!yes){cReusedV=0;document.getElementById('cReusedVal').value=0}
   recalcC();
+}
+
+// ══ Confirm "no waste" toggle (distinct from leaving Wasted at 0) ══════════
+// Only meaningful — and only enabled — when there's no wasted/reused amount yet,
+// since real waste or carry-over data already closes the entry out on its own.
+function updateNoWasteUI(){
+  const el=document.getElementById('btnNoWaste');
+  const disabled=wastedV>0||reusedV>0;
+  el.classList.toggle('disabled',disabled);
+  el.classList.toggle('active',noWasteV&&!disabled);
+}
+function toggleNoWaste(){
+  if(wastedV>0||reusedV>0)return;
+  noWasteV=!noWasteV;
+  updateNoWasteUI();
+}
+function updateNoWasteUIE(){
+  const el=document.getElementById('eBtnNoWaste');
+  const disabled=eWastedV>0||eReusedV>0;
+  el.classList.toggle('disabled',disabled);
+  el.classList.toggle('active',eNoWasteV&&!disabled);
+}
+function toggleNoWasteE(){
+  if(eWastedV>0||eReusedV>0)return;
+  eNoWasteV=!eNoWasteV;
+  updateNoWasteUIE();
+}
+function updateNoWasteUIC(){
+  const el=document.getElementById('cBtnNoWaste');
+  const disabled=cWastedV>0||cReusedV>0;
+  el.classList.toggle('disabled',disabled);
+  el.classList.toggle('active',cNoWasteV&&!disabled);
+}
+function toggleNoWasteC(){
+  if(cWastedV>0||cReusedV>0)return;
+  cNoWasteV=!cNoWasteV;
+  updateNoWasteUIC();
 }
 
 // ══ Recalc ════════════════════════════════════════════════════════════════
 function recalc(){
   document.getElementById('afterServiceSection').style.display=prodV>0?'block':'none';
+  if(wastedV>0||reusedV>0)noWasteV=false;
   const sold=Math.max(0,prodV-wastedV-reusedV);
   document.getElementById('sumSold').textContent=prodV>0?sold:'—';
   document.getElementById('sumWaste').textContent=wastedV;
@@ -1131,22 +1248,27 @@ function recalc(){
   document.getElementById('sumStrip').classList.toggle('on',prodV>0);
   document.getElementById('h-wasted').classList.toggle('on',wastedV>prodV);
   document.getElementById('h-reused').classList.toggle('on',(wastedV+reusedV)>prodV);
+  updateNoWasteUI();
 }
 function recalcE(){
+  if(eWastedV>0||eReusedV>0)eNoWasteV=false;
   const sold=Math.max(0,eProdV-eWastedV-eReusedV);
   document.getElementById('eSumSold').textContent=eProdV>0?sold:'—';
   document.getElementById('eSumWaste').textContent=eWastedV;
   document.getElementById('eSumCarry').textContent=eReusedV;
   document.getElementById('h-eWasted').classList.toggle('on',eWastedV>eProdV);
   document.getElementById('h-eReused').classList.toggle('on',(eWastedV+eReusedV)>eProdV);
+  updateNoWasteUIE();
 }
 function recalcC(){
+  if(cWastedV>0||cReusedV>0)cNoWasteV=false;
   const sold=Math.max(0,cProdV-cWastedV-cReusedV);
   document.getElementById('cSumSold').textContent=cProdV>0?sold:'—';
   document.getElementById('cSumWaste').textContent=cWastedV;
   document.getElementById('cSumCarry').textContent=cReusedV;
   document.getElementById('h-cWasted').classList.toggle('on',cWastedV>cProdV);
   document.getElementById('h-cReused').classList.toggle('on',(cWastedV+cReusedV)>cProdV);
+  updateNoWasteUIC();
 }
 
 // ══ Hints ═════════════════════════════════════════════════════════════════
@@ -1181,23 +1303,25 @@ function addEntry(){
   if(!ok)return;
   const sold=produced-wasted-reused;
   const wr=produced>0?Math.round((wasted/produced)*100):0;
-  const wastePending=produced>0&&wasted===0&&!carryMode;
+  const isComplete=wasted>0||reused>0||noWasteV;
+  const wastePending=produced>0&&!isComplete;
   let autoComment=comments;
   if(reused>0)autoComment=(autoComment?autoComment+'. ':'')+`Reused: ${reused} portions carried to next day`;
   const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   entries.push({date:TODAY,weekCommencing:WC,unit,menu,dish,produced,wasted,sold,reused,
-    wasteRate:wr,comments:autoComment,staff,time,wastePending,isCarryOver:false});
+    wasteRate:wr,comments:autoComment,staff,time,wastePending,
+    wasteConfirmed:noWasteV&&wasted===0&&reused===0,isCarryOver:false});
   saveE();
-  if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused,originalComments:comments});saveC()}
+  if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused});saveC()}
   renderAll();
   if(wastePending)toast(`${dish} added — add waste after service`,'info');
   else if(reused>0)toast(`${dish} logged — carry-over set for tomorrow`,'teal');
   else toast(`${dish} added ✓`,'ok');
   // Reset
-  prodV=0;wastedV=0;reusedV=0;
-  document.getElementById('prodVal').textContent=0;
-  document.getElementById('wastedVal').textContent=0;
-  document.getElementById('reusedVal').textContent=0;
+  prodV=0;wastedV=0;reusedV=0;noWasteV=false;
+  document.getElementById('prodVal').value=0;
+  document.getElementById('wastedVal').value=0;
+  document.getElementById('reusedVal').value=0;
   document.getElementById('cmts').value='';
   document.getElementById('afterServiceSection').style.display='none';
   document.getElementById('sumStrip').classList.remove('on');
@@ -1205,6 +1329,7 @@ function addEntry(){
   document.getElementById('btnNo').className='carry-opt';
   document.getElementById('btnYes').className='carry-opt';
   document.getElementById('carryAmtSection').style.display='none';
+  updateNoWasteUI();
   clearSearch();
   switchTab('log');
 }
@@ -1288,19 +1413,26 @@ function renderEntries(){
 }
 
 // ══ Edit modal ════════════════════════════════════════════════════════════
+// Strips a previously auto-appended "Reused: X portions..." note so editing
+// doesn't pile up duplicate notes each time an entry with a carry-over is saved.
+function stripAutoReuseNote(s){
+  return (s||'').replace(/(\. )?Reused: \d+ portions carried to next day$/,'').trim();
+}
 function openEdit(idx){
-  editIdx=idx;eCarryMode=false;
+  editIdx=idx;
   const e=entries[idx];
   document.getElementById('editTitle').textContent=e.wastePending?'⚠️ Add Waste':'Edit Entry';
   document.getElementById('editInfo').innerHTML=`<strong>${e.dish}</strong>${e.unit} · ${e.menu} · ${e.time} · ${e.staff}`;
-  eProdV=e.produced;eWastedV=e.wasted;eReusedV=0;
-  document.getElementById('eProdVal').textContent=eProdV;
-  document.getElementById('eWastedVal').textContent=eWastedV;
-  document.getElementById('eReusedVal').textContent=0;
-  document.getElementById('eCmts').value=e.comments;
-  document.getElementById('eBtnNo').className='carry-opt';
-  document.getElementById('eBtnYes').className='carry-opt';
-  document.getElementById('eCarryAmt').style.display='none';
+  eProdV=e.produced;eWastedV=e.wasted;eReusedV=e.reused||0;
+  document.getElementById('eProdVal').value=eProdV;
+  document.getElementById('eWastedVal').value=eWastedV;
+  document.getElementById('eReusedVal').value=eReusedV;
+  document.getElementById('eCmts').value=stripAutoReuseNote(e.comments);
+  eCarryMode=eReusedV>0;
+  document.getElementById('eBtnNo').className='carry-opt'+(eCarryMode?'':' sel-no');
+  document.getElementById('eBtnYes').className='carry-opt'+(eCarryMode?' sel-yes':'');
+  document.getElementById('eCarryAmt').style.display=eCarryMode?'block':'none';
+  eNoWasteV=!!e.wasteConfirmed&&eWastedV===0&&eReusedV===0;
   ['h-eProd','h-eWasted','h-eReused'].forEach(id=>document.getElementById(id).classList.remove('on'));
   recalcE();
   document.getElementById('editOverlay').classList.add('on');
@@ -1317,31 +1449,33 @@ function saveEdit(){
   const wr=eProdV>0?Math.round((eWastedV/eProdV)*100):0;
   let comments=document.getElementById('eCmts').value.trim();
   if(eReusedV>0)comments=(comments?comments+'. ':'')+`Reused: ${eReusedV} portions carried to next day`;
-  entries[editIdx]={...entries[editIdx],produced:eProdV,wasted:eWastedV,sold,reused:eReusedV,wasteRate:wr,comments,wastePending:false};
+  const isComplete=eWastedV>0||eReusedV>0||eNoWasteV;
+  const wastePending=eProdV>0&&!isComplete;
+  entries[editIdx]={...entries[editIdx],produced:eProdV,wasted:eWastedV,sold,reused:eReusedV,wasteRate:wr,comments,
+    wastePending,wasteConfirmed:eNoWasteV&&eWastedV===0&&eReusedV===0};
   saveE();
   if(eReusedV>0){
     const e=entries[editIdx];
-    carryovers.push({fromDate:TODAY,unit:e.unit,menu:e.menu,dish:e.dish,reusedAmt:eReusedV,originalComments:document.getElementById('eCmts').value.trim()});saveC();
+    carryovers.push({fromDate:TODAY,unit:e.unit,menu:e.menu,dish:e.dish,reusedAmt:eReusedV});saveC();
   }
   renderAll();closeEditDirect();
-  toast(eReusedV>0?'Updated — carry-over set for tomorrow':'Entry updated ✓',eReusedV>0?'teal':'ok');
+  toast(
+    eReusedV>0?'Updated — carry-over set for tomorrow':wastePending?'Saved — waste still needed':'Entry updated ✓',
+    eReusedV>0?'teal':wastePending?'info':'ok'
+  );
 }
 
 // ══ Carry-over modal ══════════════════════════════════════════════════════
 function openCarryModal(idx){
-  activeCarryIdx=idx;cCarryMode=false;
+  activeCarryIdx=idx;cCarryMode=false;cNoWasteV=false;
   const c=carryovers[idx];
   document.getElementById('cFromDate').textContent=c.fromDate;
-  // Show dish info plus original comments if they exist
-  const originalNote=c.originalComments
-    ?`<div style="margin-top:5px;font-size:12px;color:var(--text3)">📝 ${c.originalComments}</div>`
-    :'';
-  document.getElementById('cInfo').innerHTML=`<strong>${c.dish}</strong>${c.unit} · ${c.menu} · ${c.reusedAmt} portions carried over${originalNote}`;
+  document.getElementById('cInfo').innerHTML=`<strong>${c.dish}</strong>${c.unit} · ${c.menu} · ${c.reusedAmt} portions carried over`;
   document.getElementById('cStaff').value=document.getElementById('staffName').value||'';
-  cProdV=0;cWastedV=0;cReusedV=0;
-  document.getElementById('cProdVal').textContent=0;
-  document.getElementById('cWastedVal').textContent=0;
-  document.getElementById('cReusedVal').textContent=0;
+  cProdV=c.reusedAmt;cWastedV=0;cReusedV=0;
+  document.getElementById('cProdVal').value=cProdV;
+  document.getElementById('cWastedVal').value=0;
+  document.getElementById('cReusedVal').value=0;
   document.getElementById('cCmts').value='';
   document.getElementById('cBtnNo').className='carry-opt';
   document.getElementById('cBtnYes').className='carry-opt';
@@ -1370,15 +1504,16 @@ function confirmCarry(){
   comments=(comments?comments+'. ':'')+`Carry-over from ${c.fromDate}: ${available} portions available, ${sold} sold, ${w} wasted`;
   if(r>0)comments+=`, ${r} carried to next day`;
   const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const isComplete=w>0||r>0||cNoWasteV;
+  const wastePending=!isComplete;
   entries.push({date:TODAY,weekCommencing:WC,unit:c.unit,menu:c.menu,dish:c.dish,
-    produced:0,wasted:w,sold,reused:r,wasteRate:wr,comments,staff,time,wastePending:false,isCarryOver:true});
+    produced:0,wasted:w,sold,reused:r,wasteRate:wr,comments,staff,time,wastePending,
+    wasteConfirmed:cNoWasteV&&w===0&&r===0,isCarryOver:true});
   saveE();
-  // Remove by finding the exact object reference rather than relying on index
-  const removeIdx=carryovers.indexOf(c);
-  if(removeIdx>-1)carryovers.splice(removeIdx,1);
-  if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r,originalComments:document.getElementById('cCmts').value.trim()});
+  carryovers.splice(activeCarryIdx,1);
+  if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r});
   saveC();renderAll();closeCarryDirect();
-  toast(`${c.dish} logged from carry-over ✓`,'ok');
+  toast(wastePending?`${c.dish} logged — waste still needed`:`${c.dish} logged from carry-over ✓`,wastePending?'info':'ok');
 }
 
 // ══ Build xlsx ════════════════════════════════════════════════════════════
@@ -1402,6 +1537,55 @@ function buildXlsx(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Daily Log');
   return XLSX.write(wb,{bookType:'xlsx',type:'array'});
+}
+
+// ══ Live carry-over report (silent — synced on every Dropbox send) ═════════
+const STALE_DAYS=2; // carry-overs this old or older get highlighted amber
+function parseLogDate(s){
+  const [dd,mon,yyyy]=s.split(' ');
+  return new Date(parseInt(yyyy,10),MN.indexOf(mon),parseInt(dd,10));
+}
+function daysOutstanding(fromStr){
+  const from=parseLogDate(fromStr);
+  const today0=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+  return Math.round((today0-from)/86400000);
+}
+function buildCarryReportXlsx(){
+  const stamp=NOW.toLocaleString('en-GB');
+  const headers=['Unit','Menu','Dish','Carried From','Days Outstanding','Portions Outstanding'];
+  const sorted=[...carryovers].sort((a,b)=>daysOutstanding(b.fromDate)-daysOutstanding(a.fromDate));
+  const rows=sorted.length
+    ?sorted.map(c=>[c.unit,c.menu,c.dish,c.fromDate,daysOutstanding(c.fromDate),c.reusedAmt])
+    :[['No outstanding carry-overs','','','','','']];
+  const ws=XLSX.utils.aoa_to_sheet([[`Carry-Over Report — generated ${stamp}`],[],headers,...rows]);
+  ws['!cols']=[{wch:14},{wch:18},{wch:30},{wch:14},{wch:15},{wch:18}];
+  const amber={patternType:'solid',fgColor:{rgb:'FFE0A3'},bgColor:{rgb:'FFE0A3'}};
+  sorted.forEach((c,i)=>{
+    if(daysOutstanding(c.fromDate)>=STALE_DAYS){
+      headers.forEach((_,col)=>{
+        const a=XLSX.utils.encode_cell({r:i+3,c:col});
+        if(!ws[a])ws[a]={v:'',t:'s'};ws[a].s={fill:amber};
+      });
+    }
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Carry-Over Report');
+  return XLSX.write(wb,{bookType:'xlsx',type:'array'});
+}
+async function uploadCarryReport(accessToken,unitName){
+  // Best-effort and silent by design: staff never see a toast or error for this.
+  try{
+    const blob=new Blob([buildCarryReportXlsx()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${accessToken}`,
+        'Dropbox-API-Arg':JSON.stringify({path:`/Carry-Over-Report-${unitName}.xlsx`,mode:'overwrite',autorename:false,mute:true}),
+        'Content-Type':'application/octet-stream'
+      },
+      body:blob
+    });
+  }catch(err){console.error('Carry-over report sync failed (silent):',err)}
 }
 
 // ══ Dropbox upload ════════════════════════════════════════════════════════
@@ -1434,6 +1618,9 @@ async function doUpload(){
       toast(`Upload failed (${response.status})`,'err');
       console.error(await response.json().catch(()=>{}));
     }
+    // Silently keep the live carry-over report current in the same Dropbox folder.
+    // Runs regardless of the main upload's outcome, never shown to staff.
+    await uploadCarryReport(accessToken,unitName);
   }catch(err){toast(err.message||'Upload failed','err');console.error(err)}
   finally{
     btn.disabled=false;
