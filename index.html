@@ -299,6 +299,10 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .cr-meta{font-size:12px;color:var(--text3);margin-top:2px}
 .cr-badge{background:var(--teal-l);color:#0a84ff;border-radius:8px;
   padding:4px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+.cr-delete{width:26px;height:26px;border-radius:50%;border:none;background:var(--red-l);
+  color:var(--red);font-size:12px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;cursor:pointer;transition:background .15s}
+.cr-delete:active{background:rgba(255,59,48,.22)}
 
 /* ── Tally ── */
 .tally-row{display:flex;align-items:center;justify-content:space-between;
@@ -1385,9 +1389,19 @@ function renderCarryovers(){
           <div class="cr-meta">${c.unit} · ${c.menu} · from ${c.fromDate}</div>
         </div>
         <div class="cr-badge">×${c.reusedAmt}</div>
+        <button class="cr-delete" onclick="deleteCarryover(${i},event)" aria-label="Delete carry-over">✕</button>
         <span style="color:var(--text4);font-size:14px;margin-left:2px">›</span>
       </div>
     </div>`).join('');
+}
+function deleteCarryover(idx,ev){
+  ev.stopPropagation();
+  const c=carryovers[idx];
+  if(!confirm(`Delete carry-over for "${c.dish}" (${c.reusedAmt} portions, from ${c.fromDate})?\n\nThis can't be undone.`))return;
+  carryovers.splice(idx,1);
+  saveC();
+  renderAll();
+  toast('Carry-over removed','info');
 }
 function renderEntries(){
   const n=entries.length,p=pc();
