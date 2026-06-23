@@ -884,7 +884,7 @@ const DBX_CLIENT_SECRET='c7korgjhcw6fhrv';
 let entries=JSON.parse(localStorage.getItem(KEY_E)||'[]');
 let carryovers=JSON.parse(localStorage.getItem(KEY_C)||'[]');
 let menuData={},menuMeta=null;
-let editIdx=null,activeCarryIdx=null;
+let editIdx=null,activeCarryIdx=null,editOrigProduced=0;
 let carryMode=false,eCarryMode=false,cCarryMode=false;
 // Stepper values
 let prodV=0,wastedV=0,reusedV=0,noWasteV=false;
@@ -1126,7 +1126,12 @@ function adj(id,delta){
   recalc();
 }
 function adjE(id,delta){
-  if(id==='eProd'){eProdV=Math.max(0,eProdV+delta);document.getElementById('eProdVal').value=eProdV}
+  if(id==='eProd'){
+    const wasUnchanged=eProdV===editOrigProduced;
+    eProdV=Math.max(0,eProdV+delta);
+    document.getElementById('eProdVal').value=eProdV;
+    if(wasUnchanged&&eProdV!==editOrigProduced)resetWasteOnProdChange();
+  }
   if(id==='eWasted'){eWastedV=Math.max(0,eWastedV+delta);document.getElementById('eWastedVal').value=eWastedV}
   if(id==='eReused'){eReusedV=Math.max(0,eReusedV+delta);document.getElementById('eReusedVal').value=eReusedV}
   recalcE();
@@ -1153,9 +1158,24 @@ function inp(id,el){
 function inpDone(id,el){
   el.value=id==='prod'?prodV:id==='wasted'?wastedV:reusedV;
 }
+// Clears the now-stale waste/carry/confirm state on an entry being edited the
+// moment Produced is changed away from what it was — an old waste figure for
+// the smaller batch shouldn't silently keep marking a bigger batch as 'done'.
+function resetWasteOnProdChange(){
+  eWastedV=0;eReusedV=0;eNoWasteV=false;eCarryMode=false;
+  document.getElementById('eWastedVal').value=0;
+  document.getElementById('eReusedVal').value=0;
+  document.getElementById('eBtnNo').className='carry-opt';
+  document.getElementById('eBtnYes').className='carry-opt';
+  document.getElementById('eCarryAmt').style.display='none';
+}
 function inpE(id,el){
   const v=parseStepInput(el.value);
-  if(id==='eProd')eProdV=v;
+  if(id==='eProd'){
+    const wasUnchanged=eProdV===editOrigProduced;
+    eProdV=v;
+    if(wasUnchanged&&eProdV!==editOrigProduced)resetWasteOnProdChange();
+  }
   if(id==='eWasted')eWastedV=v;
   if(id==='eReused')eReusedV=v;
   recalcE();
@@ -1421,6 +1441,7 @@ function stripAutoReuseNote(s){
 function openEdit(idx){
   editIdx=idx;
   const e=entries[idx];
+  editOrigProduced=e.produced;
   document.getElementById('editTitle').textContent=e.wastePending?'⚠️ Add Waste':'Edit Entry';
   document.getElementById('editInfo').innerHTML=`<strong>${e.dish}</strong>${e.unit} · ${e.menu} · ${e.time} · ${e.staff}`;
   eProdV=e.produced;eWastedV=e.wasted;eReusedV=e.reused||0;
