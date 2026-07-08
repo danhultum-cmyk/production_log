@@ -161,6 +161,17 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .sri-menu{font-size:12px;color:var(--text3);background:var(--blue-l);
   color:var(--blue);border-radius:6px;padding:2px 8px;white-space:nowrap;font-weight:600}
 .search-empty{padding:16px;text-align:center;font-size:14px;color:var(--text3)}
+.sri-typo{font-size:10px;font-weight:700;color:var(--amber);background:var(--amber-l);
+  border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap;vertical-align:middle}
+/* Other-dish suggestion — deliberately NOT position:absolute like .search-results.
+   Staff always tap elsewhere on the form right after typing (Portions Produced, etc.),
+   so a floating box that dismisses on outside click would hide itself before it's seen.
+   This sits in normal document flow instead, pushing the rest of the form down, and
+   stays put until the text changes or the Other section closes. */
+.other-suggest-inline{display:none;margin:0 16px 12px;background:var(--surf);
+  border:1.5px solid rgba(255,159,10,.4);border-radius:var(--rs);overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.other-suggest-inline.on{display:block}
 .search-divider{font-size:11px;font-weight:700;color:var(--text3);
   text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 4px;
   background:var(--surf2)}
@@ -305,6 +316,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .carry-reminder.stale .cr-icon{background:var(--amber-l)}
 .carry-reminder.stale .cr-badge{background:var(--amber-l);color:var(--amber)}
 .cr-stale-tag{font-size:10px;font-weight:700;color:var(--amber);margin-top:2px}
+.cr-note{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
 /* ── Tally ── */
 .tally-row{display:flex;align-items:center;justify-content:space-between;
@@ -486,11 +499,27 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
       <div class="hint" id="h-menu">Please select a menu.</div>
       <div class="field">
         <div class="field-label req">Dish</div>
-        <select id="dishSel" disabled>
+        <select id="dishSel" disabled onchange="onDishSelectChange()">
           <option value="">Select menu first…</option>
         </select>
       </div>
       <div class="hint" id="h-dish">Please select a dish.</div>
+      <div id="otherSection" style="display:none">
+        <div class="info-banner amber" style="margin:12px 16px">
+          <span class="ib-icon">🔍</span>
+          <span id="otherBannerText">Please check the search above first — this may already be listed under a different name.</span>
+        </div>
+        <div class="field-label req" id="otherFieldLabel" style="padding:0 16px 6px">What is it?</div>
+        <div class="search-wrap" style="border-bottom:1px solid var(--sep);padding-top:0">
+          <div class="search-box">
+            <span class="search-icon">✏️</span>
+            <input type="text" class="search-input" id="otherDishInput"
+              placeholder="Type the dish or ingredient…" oninput="onOtherSearch()" autocomplete="off">
+          </div>
+          <div class="other-suggest-inline" id="otherSuggest"></div>
+        </div>
+        <div class="hint" id="h-otherDish">Please type what this dish or ingredient is.</div>
+      </div>
     </div>
 
     <div class="section-hdr">Portions</div>
@@ -1088,6 +1117,7 @@ function updateMenus(){
   mSel.innerHTML='<option value="">Select menu…</option>';
   dSel.innerHTML='<option value="">Select dish…</option>';
   mSel.disabled=!unit;dSel.disabled=true;
+  hideOtherSection();
   if(!unit)return;
   Object.keys(menuData[unit]||{}).sort().forEach(m=>{
     const o=document.createElement('option');o.value=o.textContent=m;mSel.appendChild(o);
@@ -1099,15 +1129,142 @@ function updateDishes(){
   const dSel=document.getElementById('dishSel');
   dSel.innerHTML='<option value="">Select dish…</option>';
   dSel.disabled=!menu;
+  hideOtherSection();
   if(!unit||!menu)return;
   [...(menuData[unit]||{})[menu]||[]].sort().forEach(d=>{
     const o=document.createElement('option');o.value=o.textContent=d;dSel.appendChild(o);
   });
+  const oOpt=document.createElement('option');
+  oOpt.value='__OTHER__';oOpt.textContent='➕ Other / Not listed…';
+  dSel.appendChild(oOpt);
+}
+
+// ══ Other / Not-listed dish ══════════════════════════════════════════════
+// Two triggers land here: picking the "➕ Other" sentinel (a brand new dish that
+// doesn't exist anywhere yet), or picking an existing catch-all placeholder that's
+// already on the menu (e.g. "Misc Off Menu Item") — both are ambiguous without a note.
+let otherMode=null; // null | 'new' | 'catchall'
+function isCatchAllDish(name){
+  if(!name)return false;
+  const n=name.toLowerCase();
+  return n.includes('misc')||n.includes('off menu')||n==='other';
+}
+function onDishSelectChange(){
+  const v=document.getElementById('dishSel').value;
+  if(v==='__OTHER__')showOtherSection('new');
+  else if(isCatchAllDish(v))showOtherSection('catchall');
+  else hideOtherSection();
+}
+function showOtherSection(mode){
+  otherMode=mode;
+  const dishSelVal=document.getElementById('dishSel').value;
+  if(mode==='catchall'){
+    document.getElementById('otherBannerText').textContent=
+      `"${dishSelVal}" is a general catch-all — please check the search above first, then describe what it actually is below.`;
+    document.getElementById('otherFieldLabel').textContent='What is it, specifically?';
+    document.getElementById('otherDishInput').placeholder='e.g. Leftover Beef Wellington Trial…';
+  } else {
+    document.getElementById('otherBannerText').textContent=
+      'Please check the search above first — this may already be listed under a different name.';
+    document.getElementById('otherFieldLabel').textContent='What is it?';
+    document.getElementById('otherDishInput').placeholder='Type the dish or ingredient…';
+  }
+  document.getElementById('otherSection').style.display='block';
+  toast('Check the search above first — it may already be listed','info');
+  document.getElementById('otherDishInput').focus();
+}
+function hideOtherSection(){
+  otherMode=null;
+  document.getElementById('otherSection').style.display='none';
+  document.getElementById('otherDishInput').value='';
+  document.getElementById('otherSuggest').classList.remove('on');
+  document.getElementById('otherSuggest').innerHTML='';
+  document.getElementById('h-otherDish').classList.remove('on');
+}
+// ── Typo-tolerant fuzzy matching ──
+// Plain substring search misses ordinary typos ("Sauage" vs "Sausage"), which defeats
+// the whole point of nudging staff toward an existing dish instead of creating a
+// near-duplicate. This adds a lightweight edit-distance layer on top of substring search.
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  if(!m)return n;if(!n)return m;
+  const dp=Array(n+1);for(let j=0;j<=n;j++)dp[j]=j;
+  for(let i=1;i<=m;i++){
+    let prev=dp[0];dp[0]=i;
+    for(let j=1;j<=n;j++){
+      const tmp=dp[j];
+      dp[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,dp[j],dp[j-1]);
+      prev=tmp;
+    }
+  }
+  return dp[n];
+}
+function wordSim(a,b){
+  const maxLen=Math.max(a.length,b.length);
+  if(!maxLen)return 1;
+  return 1-levenshtein(a,b)/maxLen;
+}
+function fuzzyDishScore(query,target){
+  const q=query.toLowerCase().trim(),t=target.toLowerCase();
+  if(!q)return 0;
+  if(t.includes(q))return 2; // exact substring is always the strongest signal
+  const qWords=q.split(/\s+/).filter(w=>w.length>=2);
+  const tWords=t.split(/\s+/).filter(w=>w.length>=2);
+  if(!qWords.length||!tWords.length)return 0;
+  let matched=0;
+  qWords.forEach(qw=>{
+    let best=0;
+    tWords.forEach(tw=>{const s=wordSim(qw,tw);if(s>best)best=s});
+    if(best>=0.72)matched++;
+  });
+  return matched/qWords.length; // 0..1 typo-tolerant word overlap
+}
+function fuzzyMatchDishes(query,menus){
+  const matches=[];
+  Object.entries(menus).forEach(([menu,dishes])=>{
+    dishes.forEach(dish=>{
+      let score=fuzzyDishScore(query,dish);
+      if(score<0.6&&menu.toLowerCase().includes(query.toLowerCase()))score=0.6;
+      if(score>=0.6)matches.push({dish,menu,score});
+    });
+  });
+  matches.sort((a,b)=>b.score-a.score||a.dish.localeCompare(b.dish));
+  return matches;
+}
+
+function onOtherSearch(){
+  const q=document.getElementById('otherDishInput').value.trim();
+  const box=document.getElementById('otherSuggest');
+  if(q.length<2){box.classList.remove('on');box.innerHTML='';return}
+  const unit=document.getElementById('unitSel').value;
+  const menus=unit?menuData[unit]:Object.values(menuData)[0]||{};
+  const matches=fuzzyMatchDishes(q,menus);
+  if(!matches.length){
+    box.innerHTML='<div class="search-empty">No existing match — safe to add as new</div>';
+    box.classList.add('on');return;
+  }
+  box.innerHTML='<div class="search-divider">Already on the menu — tap to use instead</div>'+
+    matches.slice(0,8).map(m=>{
+      const typoTag=m.score<2?'<span class="sri-typo">possible match</span>':'';
+      return `
+    <div class="search-result-item" onclick="pickExistingOverOther('${m.menu.replace(/'/g,"\\'")}','${m.dish.replace(/'/g,"\\'")}')">
+      <div class="sri-dish">${m.dish}${typoTag}</div>
+      <div class="sri-menu">${m.menu}</div>
+    </div>`;
+    }).join('');
+  box.classList.add('on');
+}
+function pickExistingOverOther(menu,dish){
+  document.getElementById('menuSel').value=menu;
+  updateDishes();
+  document.getElementById('dishSel').value=dish;
+  hideOtherSection();
+  toast(`Using existing "${dish}" instead`,'ok');
 }
 
 // ══ Search ════════════════════════════════════════════════════════════════
 function onSearch(){
-  const q=document.getElementById('dishSearch').value.trim().toLowerCase();
+  const q=document.getElementById('dishSearch').value.trim();
   const results=document.getElementById('searchResults');
   const clear=document.getElementById('searchClear');
   clear.classList.toggle('on',q.length>0);
@@ -1116,32 +1273,27 @@ function onSearch(){
   const unit=document.getElementById('unitSel').value;
   const menus=unit?menuData[unit]:Object.values(menuData)[0]||{};
 
-  // Search across all menus
-  const matches=[];
-  Object.entries(menus).forEach(([menu,dishes])=>{
-    dishes.forEach(dish=>{
-      if(dish.toLowerCase().includes(q)||menu.toLowerCase().includes(q)){
-        matches.push({dish,menu});
-      }
-    });
-  });
-  matches.sort((a,b)=>a.dish.localeCompare(b.dish));
+  // Typo-tolerant search across all menus — same matching used by the Other-dish
+  // suggestion box, so a misspelled search here and a misspelled "Other" entry get
+  // caught the same way
+  const matches=fuzzyMatchDishes(q,menus);
 
   if(!matches.length){
     results.innerHTML='<div class="search-empty">No dishes found</div>';
     results.classList.add('on');return;
   }
 
-  // Group by menu
+  // Group by menu, preserving the relevance order matches came back in
   const grouped={};
-  matches.forEach(m=>{if(!grouped[m.menu])grouped[m.menu]=[];grouped[m.menu].push(m.dish)});
+  matches.forEach(m=>{if(!grouped[m.menu])grouped[m.menu]=[];grouped[m.menu].push(m)});
 
   let html='';
-  Object.entries(grouped).forEach(([menu,dishes])=>{
+  Object.entries(grouped).forEach(([menu,items])=>{
     html+=`<div class="search-divider">${menu}</div>`;
-    dishes.forEach(dish=>{
+    items.forEach(({dish,score})=>{
+      const typoTag=score<2?'<span class="sri-typo">possible match</span>':'';
       html+=`<div class="search-result-item" onclick="selectDish('${menu.replace(/'/g,"\\'")}','${dish.replace(/'/g,"\\'")}')">
-        <div class="sri-dish">${dish}</div>
+        <div class="sri-dish">${dish}${typoTag}</div>
         <div class="sri-menu">${menu}</div>
       </div>`;
     });
@@ -1168,9 +1320,10 @@ function selectDish(menu,dish){
   // Scroll to portions
   document.getElementById('afterServiceSection').style.display='none';
   prodV=0;wastedV=0;reusedV=0;
-  document.getElementById('prodVal').textContent=0;
-  document.getElementById('wastedVal').textContent=0;
-  document.getElementById('reusedVal').textContent=0;
+  setVal('prodVal',0);
+  setVal('wastedVal',0);
+  setVal('reusedVal',0);
+  setNW(false);
 }
 
 function clearSearch(){
@@ -1181,9 +1334,12 @@ function clearSearch(){
 
 // Close search results when tapping outside
 document.addEventListener('click',e=>{
-  if(!e.target.closest('.search-wrap')){
+  if(!e.target.closest('#dishSearch')&&!e.target.closest('#searchResults')){
     document.getElementById('searchResults').classList.remove('on');
   }
+  // otherSuggest deliberately does NOT dismiss on outside click — staff always need to
+  // tap elsewhere next (Portions Produced, etc.) right after typing, so auto-dismissing
+  // there would hide the very suggestion it exists to show
 });
 
 // ══ Tabs ══════════════════════════════════════════════════════════════════
@@ -1341,7 +1497,7 @@ function recalcC(){
 
 // ══ Hints ═════════════════════════════════════════════════════════════════
 function clrH(){
-  ['h-staff','h-unit','h-menu','h-dish','h-prod','h-wasted','h-reused']
+  ['h-staff','h-unit','h-menu','h-dish','h-otherDish','h-prod','h-wasted','h-reused']
     .forEach(id=>document.getElementById(id)?.classList.remove('on'));
   ['staffName','unitSel','menuSel','dishSel'].forEach(id=>{
     const el=document.getElementById(id);
@@ -1357,14 +1513,24 @@ function addEntry(){
   const staff=document.getElementById('staffName').value.trim();
   const unit=document.getElementById('unitSel').value;
   const menu=document.getElementById('menuSel').value;
-  const dish=document.getElementById('dishSel').value;
+  const dishSelVal=document.getElementById('dishSel').value;
+  const isOther=dishSelVal==='__OTHER__';           // brand new dish, not on any list yet
+  const isCatchAll=isCatchAllDish(dishSelVal);        // existing generic placeholder (e.g. "Misc Off Menu Item")
+  const otherText=document.getElementById('otherDishInput').value.trim();
+  // A staff-typed "Other" dish becomes the real dish name everywhere (entry list, xlsx
+  // export, carry-over cards) — never the literal word "Other" — so it stays identifiable.
+  // An existing catch-all placeholder KEEPS its recognised name instead (so it still
+  // matches EPOS sales data the same way it always has) — the description goes in the
+  // comment/carry-over note only, not the dish field.
+  const dish=isOther?otherText:dishSelVal;
   const produced=prodV,wasted=wastedV,reused=carryMode?reusedV:0;
   const comments=document.getElementById('cmts').value.trim();
   let ok=true;
   if(!staff){sh('h-staff');mf('staffName');ok=false}
   if(!unit){sh('h-unit');mf('unitSel');ok=false}
   if(!menu){sh('h-menu');mf('menuSel');ok=false}
-  if(!dish){sh('h-dish');mf('dishSel');ok=false}
+  if(!dishSelVal){sh('h-dish');mf('dishSel');ok=false}
+  else if((isOther||isCatchAll)&&!otherText){sh('h-otherDish');ok=false}
   if(produced<1){sh('h-prod');ok=false}
   if(wasted>produced){sh('h-wasted');ok=false}
   if((wasted+reused)>produced){sh('h-reused');ok=false}
@@ -1372,13 +1538,18 @@ function addEntry(){
   const sold=produced-wasted-reused;
   const wr=produced>0?Math.round((wasted/produced)*100):0;
   const wastePending=produced>0&&wasted===0&&reused===0&&!nwMode;
-  let autoComment=comments;
+  // carryNote is what shows in the carry-over reminder preview — includes the "not on
+  // menu" / catch-all identification flag but never the Reused tail (redundant next to reusedAmt)
+  let carryNote=comments;
+  if(isOther)carryNote=(carryNote?carryNote+'. ':'')+`Not on menu list — added manually as "${dish}"`;
+  else if(isCatchAll)carryNote=(carryNote?carryNote+'. ':'')+`${dishSelVal}: ${otherText}`;
+  let autoComment=carryNote;
   if(reused>0)autoComment=(autoComment?autoComment+'. ':'')+`Reused: ${reused} portions carried to next day`;
   const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   entries.push({date:TODAY,weekCommencing:WC,unit,menu,dish,produced,wasted,sold,reused,
     wasteRate:wr,comments:autoComment,staff,time,wastePending,isCarryOver:false});
   saveE();
-  if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused,originalComments:comments});saveC()}
+  if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused,originalComments:carryNote});saveC()}
   renderAll();
   if(wastePending)toast(`${dish} added — add waste after service`,'info');
   else if(reused>0)toast(`${dish} logged — carry-over set for tomorrow`,'teal');
@@ -1397,6 +1568,8 @@ function addEntry(){
   document.getElementById('carryAmtSection').style.display='none';
   setNW(false);
   clearSearch();
+  if(isOther)document.getElementById('dishSel').value='';
+  hideOtherSection();
   switchTab('log');
 }
 
@@ -1438,6 +1611,9 @@ function renderCarryovers(){
     const d=daysSince(c.fromDate);
     const stale=d>=2;
     const staleTag=stale?`<div class="cr-stale-tag">⚠ ${d} days outstanding</div>`:'';
+    // The original comment stays visible right on the card — essential when the dish was
+    // manually typed via "Other", since a bare name alone may not be enough to place it
+    const noteTag=c.originalComments?`<div class="cr-note">📝 ${c.originalComments}</div>`:'';
     return`
     <div class="carry-reminder${stale?' stale':''}" onclick="openCarryModal(${i})">
       <div class="cr-inner">
@@ -1445,6 +1621,7 @@ function renderCarryovers(){
         <div class="cr-body">
           <div class="cr-dish">${c.dish}</div>
           <div class="cr-meta">${c.unit} · ${c.menu} · from ${c.fromDate}</div>
+          ${noteTag}
           ${staleTag}
         </div>
         <div class="cr-badge">×${c.reusedAmt}</div>
@@ -1616,7 +1793,11 @@ function confirmCarry(){
   const sold=available-w-r;
   const wr=available>0?Math.round((w/available)*100):0;
   const rawComments=document.getElementById('cCmts').value.trim();
-  let comments=rawComments;
+  // Carry the original provenance note (e.g. "Not on menu list — added manually as X")
+  // forward through every re-carry cycle, folding in each day's fresh note as it goes
+  let carryChain=c.originalComments||'';
+  if(rawComments)carryChain=(carryChain?carryChain+'. ':'')+rawComments;
+  let comments=carryChain;
   comments=(comments?comments+'. ':'')+`Carry-over from ${c.fromDate}: ${available} portions available, ${sold} sold, ${w} wasted`;
   if(r>0)comments+=`, ${r} carried to next day`;
   // wastePending recomputed the same way as a fresh entry — 0 wasted with no re-carry and no
@@ -1630,7 +1811,7 @@ function confirmCarry(){
   // shifted between opening the modal and confirming
   const removeIdx=carryovers.indexOf(c);
   if(removeIdx>-1)carryovers.splice(removeIdx,1);
-  if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r,originalComments:rawComments});
+  if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r,originalComments:carryChain});
   saveC();renderAll();closeCarryDirect();
   toast(wastePending?`${c.dish} logged — add waste after service`:`${c.dish} logged from carry-over ✓`,wastePending?'info':'ok');
 }
