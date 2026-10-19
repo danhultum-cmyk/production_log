@@ -64,12 +64,17 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
   display:none;align-items:center;gap:4px;letter-spacing:.1px}
 .hdr-badge.on{display:flex}
 .hb-live{background:var(--green-l);color:var(--green);display:flex!important}
+.hb-orphan{background:var(--red-l);color:var(--red);font-weight:800;animation:orphanPulse 2s infinite}
+@keyframes orphanPulse{0%,100%{opacity:1}50%{opacity:.65}}
+.conflict-banner{background:var(--red);color:#fff;padding:11px 16px;font-size:13px;
+  font-weight:600;line-height:1.5;display:flex;gap:9px;align-items:flex-start}
 .ldot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .hb-pend{background:var(--amber-l);color:var(--amber)}
 .hb-carry{background:var(--teal-l);color:#0a84ff}
 .hb-cnt{background:var(--blue-l);color:var(--blue)}
 .hb-dbx{background:var(--dbx-l);color:var(--dbx)}
+.hb-dbx.sync-err{background:var(--red-l);color:var(--red)}
 .gear-btn{width:34px;height:34px;border-radius:50%;background:var(--surf2);
   display:flex;align-items:center;justify-content:center;
   font-size:16px;cursor:pointer;border:none;transition:background .15s}
@@ -226,6 +231,28 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .carry-opt.sel-no{background:var(--red-l);border-color:rgba(255,59,48,.25);color:var(--red)}
 .carry-opt.sel-yes{background:var(--teal-l);border-color:rgba(90,200,250,.3);color:#0a84ff}
 
+/* ── Repurpose ── */
+.rep-row{padding:12px 16px;border-bottom:1px solid var(--sep)}
+.rep-label{font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px}
+.rep-label .sub{font-size:12px;color:var(--text3);display:block;margin-top:1px;font-weight:400}
+.rep-btn{width:100%;padding:11px;border-radius:10px;border:1.5px dashed rgba(175,82,222,.5);
+  background:var(--purple-l);color:var(--purple);font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer}
+.rep-btn:active{opacity:.7}
+.rep-summary{display:none;align-items:center;gap:8px;background:var(--purple-l);
+  border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:13px;color:var(--text);font-weight:600}
+.rep-summary.on{display:flex}
+.rep-summary .rs-txt{flex:1;min-width:0}
+.rep-summary .rs-x{width:26px;height:26px;border-radius:50%;background:var(--red-l);color:var(--red);
+  border:none;font-weight:700;cursor:pointer;flex-shrink:0}
+.rep-picked{display:none;margin:0 16px 12px;padding:10px 12px;border-radius:10px;
+  background:var(--purple-l);color:var(--purple);font-weight:700;font-size:14px}
+.rep-picked.on{display:block}
+.sum-pill.rep{background:var(--purple-l);display:none}
+.sum-pill.rep.on{display:block}
+.sum-pill.rep .sp-val{color:var(--purple)}
+.etag-rep{background:var(--purple-l);color:var(--purple)}
+
 /* ── Summary strip ── */
 .sum-strip{display:none;padding:12px 16px;gap:8px}
 .sum-strip.on{display:flex}
@@ -318,6 +345,19 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 .cr-stale-tag{font-size:10px;font-weight:700;color:var(--amber);margin-top:2px}
 .cr-note{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* ── Orphaned (unsent) previous-day data ── */
+.orphan-card{background:var(--surf);border-radius:var(--r);box-shadow:var(--shadow);
+  margin-bottom:8px;overflow:hidden;border-left:3px solid var(--red);animation:fadeUp .2s ease}
+.oc-inner{padding:12px 14px;display:flex;align-items:center;gap:10px}
+.oc-icon{width:34px;height:34px;border-radius:10px;background:var(--red-l);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.oc-body{flex:1;min-width:0}
+.oc-date{font-size:14px;font-weight:700;color:var(--text);font-family:'Nunito',sans-serif}
+.oc-meta{font-size:12px;color:var(--red);margin-top:2px;font-weight:600}
+.oc-btn{background:var(--red);color:#fff;border:none;border-radius:8px;
+  padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.oc-btn:active{opacity:.85}
 
 /* ── Tally ── */
 .tally-row{display:flex;align-items:center;justify-content:space-between;
@@ -422,6 +462,7 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
       <p id="hdrDate">—</p>
     </div>
     <div class="hdr-right">
+      <div class="hdr-badge hb-orphan" id="bdgOrphan" onclick="switchTab('log')">🚨 <span id="bdgOrphanN">0</span> unsent</div>
       <div class="hdr-badge hb-carry" id="bdgCarry">🔄 <span id="bdgCarryN">0</span></div>
       <div class="hdr-badge hb-pend"  id="bdgPend">⚠️ <span id="bdgPendN">0</span></div>
       <div class="hdr-badge hb-cnt"   id="bdgCnt"></div>
@@ -429,6 +470,12 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
       <div class="hdr-badge hb-live"><div class="ldot"></div>Live</div>
       <button class="gear-btn" onclick="switchTab('settings')">⚙️</button>
     </div>
+  </div>
+
+  <!-- Sync conflict — visible on every tab, this is a stop-what-you're-doing situation -->
+  <div class="conflict-banner" id="conflictBanner" style="display:none">
+    <span class="ib-icon">🚨</span>
+    <span id="conflictDetail"></span>
   </div>
 
   <!-- Tabs -->
@@ -473,6 +520,8 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
       </div>
       <div class="hint" id="h-unit">Please select a unit.</div>
     </div>
+
+    <button class="rep-btn" style="margin:-4px 0 6px" onclick="openRecv()">📥 Received portions from another unit? Log them here</button>
 
     <div class="section-hdr">Menu & Dish</div>
     <div class="card">
@@ -580,12 +629,19 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
               <button class="step-btn plus" ontouchstart="" onclick="adj('reused',1)">+</button>
             </div>
           </div>
-          <div class="hint" id="h-reused">Wasted + carried over cannot exceed produced.</div>
+          <div class="hint" id="h-reused">Wasted + carried over + repurposed cannot exceed produced.</div>
+        </div>
+        <div class="rep-row">
+          <div class="rep-label">Turning leftovers into another dish?
+            <span class="sub">e.g. surplus jacket potatoes → potato wedges. Not waste, not a carry-over.</span></div>
+          <div class="rep-summary" id="repSummary"></div>
+          <button class="rep-btn" id="repBtn" onclick="openRep('add')">🔁 Repurpose into another dish</button>
         </div>
         <div class="sum-strip" id="sumStrip">
           <div class="sum-pill sold"><div class="sp-label">Sold</div><div class="sp-val" id="sumSold">—</div></div>
           <div class="sum-pill waste"><div class="sp-label">Wasted</div><div class="sp-val" id="sumWaste">0</div></div>
           <div class="sum-pill carry"><div class="sp-label">Carry Over</div><div class="sp-val" id="sumCarry">0</div></div>
+          <div class="sum-pill rep" id="sumRepPill"><div class="sp-label">Repurposed</div><div class="sp-val" id="sumRep">0</div></div>
         </div>
       </div>
     </div>
@@ -602,6 +658,12 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
 
   <!-- ══ LOG PANEL ══ -->
   <div class="panel" id="panel-log">
+
+    <!-- Unsent previous-day data — most urgent thing on this screen -->
+    <div id="orphanSection" style="display:none">
+      <div class="section-hdr">🚨 Unsent Data From Previous Days</div>
+      <div id="orphanList"></div>
+    </div>
 
     <!-- Recovery banner — hidden unless needed -->
     <div class="info-banner red" id="recoverBanner" style="display:none">
@@ -786,12 +848,18 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
             <button class="step-btn plus" ontouchstart="" onclick="adjE('eReused',1)">+</button>
           </div>
         </div>
-        <div class="hint" id="h-eReused">Wasted + carried over cannot exceed produced.</div>
+        <div class="hint" id="h-eReused">Wasted + carried over + repurposed cannot exceed produced.</div>
+      </div>
+      <div class="rep-row">
+        <div class="rep-label">Turning leftovers into another dish?</div>
+        <div class="rep-summary" id="eRepSummary"></div>
+        <button class="rep-btn" id="eRepBtn" onclick="openRep('edit')">🔁 Repurpose into another dish</button>
       </div>
       <div class="sum-strip on" id="eSumStrip" style="border-top:1px solid var(--sep)">
         <div class="sum-pill sold"><div class="sp-label">Sold</div><div class="sp-val" id="eSumSold">—</div></div>
         <div class="sum-pill waste"><div class="sp-label">Wasted</div><div class="sp-val" id="eSumWaste">0</div></div>
         <div class="sum-pill carry"><div class="sp-label">Carry Over</div><div class="sp-val" id="eSumCarry">0</div></div>
+        <div class="sum-pill rep" id="eSumRepPill"><div class="sp-label">Repurposed</div><div class="sp-val" id="eSumRep">0</div></div>
       </div>
     </div>
     <div class="modal-card">
@@ -862,12 +930,18 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
             <button class="step-btn plus" ontouchstart="" onclick="adjC('cReused',1)">+</button>
           </div>
         </div>
-        <div class="hint" id="h-cReused">Cannot exceed available.</div>
+        <div class="hint" id="h-cReused">Wasted + carried over + repurposed cannot exceed available.</div>
+      </div>
+      <div class="rep-row">
+        <div class="rep-label">Turning these into another dish?</div>
+        <div class="rep-summary" id="cRepSummary"></div>
+        <button class="rep-btn" id="cRepBtn" onclick="openRep('carry')">🔁 Repurpose into another dish</button>
       </div>
       <div class="sum-strip on" id="cSumStrip" style="border-top:1px solid var(--sep)">
         <div class="sum-pill sold"><div class="sp-label">Sold</div><div class="sp-val" id="cSumSold">—</div></div>
         <div class="sum-pill waste"><div class="sp-label">Wasted</div><div class="sp-val" id="cSumWaste">0</div></div>
         <div class="sum-pill carry"><div class="sp-label">Carry Over</div><div class="sp-val" id="cSumCarry">0</div></div>
+        <div class="sum-pill rep" id="cSumRepPill"><div class="sp-label">Repurposed</div><div class="sp-val" id="cSumRep">0</div></div>
       </div>
     </div>
     <div class="modal-card">
@@ -878,6 +952,128 @@ body{min-height:100%;background:var(--bg);font-family:'Nunito Sans',system-ui,sa
     </div>
   </div>
 </div>
+
+<!-- ══ REPURPOSE PICKER MODAL ══ -->
+<div class="overlay" id="repOverlay" style="z-index:600" onclick="closeRep(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <span class="modal-title">🔁 Repurpose into another dish</span>
+      <button class="modal-close" onclick="closeRepDirect()">✕</button>
+    </div>
+    <div class="modal-info" id="repInfo"></div>
+    <div class="modal-card">
+      <div class="stepper-row" style="border-bottom:1px solid var(--sep)">
+        <div class="stepper-label">Portions repurposed
+          <span class="sub" id="repMaxHint"></span></div>
+        <div class="stepper">
+          <button class="step-btn minus" ontouchstart="" onclick="adjRep(-1)">−</button>
+          <input type="number" class="step-val" id="repAmtVal" value="0" min="0" inputmode="numeric" oninput="stepInputRep()">
+          <button class="step-btn plus" ontouchstart="" onclick="adjRep(1)">+</button>
+        </div>
+      </div>
+      <div class="hint" id="h-repAmt">Enter 1 or more, and no more than are left after waste and carry-over.</div>
+      <div class="field" style="border-top:1px solid var(--sep)">
+        <div class="field-label">Where to?</div>
+        <select id="repUnitSel" onchange="onRepUnitChange()"></select>
+      </div>
+      <div id="repCrossBlock" style="display:none">
+        <div class="info-banner blue" style="margin:4px 16px 14px">
+          <span class="ib-icon">📤</span>
+          <span id="repCrossText">This takes the portions off this dish and records them as sent. That unit logs them on its own tablet using <strong>📥 Received from another unit</strong>.</span>
+        </div>
+      </div>
+      <div id="repLocalBlock">
+      <div class="field-label req" style="padding:12px 16px 6px">What does it become?</div>
+      <div class="search-wrap" style="border-bottom:none;padding-top:0">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="repSearch" placeholder="Search the new dish… e.g. wedges" oninput="onRepSearch()" autocomplete="off">
+        </div>
+      </div>
+      <div class="other-suggest-inline" id="repSuggest"></div>
+      <div class="rep-picked" id="repPicked"></div>
+      <div class="hint" id="h-repPick">Please search for and tap the new dish.</div>
+      <div class="carry-section" style="border-top:1px solid var(--sep)">
+        <div class="carry-section-label">When will it be served?</div>
+        <div class="carry-toggle">
+          <div class="carry-opt sel-yes" id="repToday" onclick="setRepWhen('today')">Today</div>
+          <div class="carry-opt" id="repTomorrow" onclick="setRepWhen('tomorrow')">Tomorrow</div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5" id="repWhenHelp"></div>
+      </div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn-primary" onclick="confirmRep()">✓ &nbsp;Confirm</button>
+      <button class="btn-secondary red" id="repRemoveBtn" onclick="removeRepFromPicker()" style="display:none">Remove repurpose</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECEIVED FROM ANOTHER UNIT MODAL ══ -->
+<div class="overlay" id="recvOverlay" style="z-index:600" onclick="closeRecv(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <span class="modal-title">📥 Received from another unit</span>
+      <button class="modal-close" onclick="closeRecvDirect()">✕</button>
+    </div>
+    <div class="modal-info" id="recvInfo"></div>
+    <div class="modal-card">
+      <div class="field">
+        <div class="field-label req">From unit</div>
+        <select id="recvFromSel"></select>
+      </div>
+      <div class="hint" id="h-recvFrom">Please choose which unit sent it.</div>
+      <div class="field-label req" style="padding:12px 16px 6px;border-top:1px solid var(--sep)">What did you receive? (as it will be logged here)</div>
+      <div class="search-wrap" style="border-bottom:none;padding-top:0">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="recvSearch" placeholder="Search the dish… e.g. korma" oninput="onRecvSearch()" autocomplete="off">
+        </div>
+      </div>
+      <div class="other-suggest-inline" id="recvSuggest"></div>
+      <div class="rep-picked" id="recvPicked"></div>
+      <div class="hint" id="h-recvPick">Please search for and tap the dish.</div>
+      <div class="stepper-row" style="border-top:1px solid var(--sep)">
+        <div class="stepper-label">Portions received</div>
+        <div class="stepper">
+          <button class="step-btn minus" ontouchstart="" onclick="adjRecv(-1)">−</button>
+          <input type="number" class="step-val" id="recvAmtVal" value="0" min="0" inputmode="numeric">
+          <button class="step-btn plus" ontouchstart="" onclick="adjRecv(1)">+</button>
+        </div>
+      </div>
+      <div class="hint" id="h-recvAmt">Must be at least 1.</div>
+      <div style="padding:10px 16px 14px;font-size:12px;color:var(--text3);line-height:1.5">
+        This adds a line to today's log. Tap it afterwards to enter how many were wasted — that waste counts against <strong>this</strong> unit.
+      </div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <button class="btn-primary" onclick="confirmRecv()">✓ &nbsp;Add to Today's Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ORPHANED DAY MODAL ══ -->
+<div class="overlay" id="orphanOverlay" onclick="closeOrphan(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <span class="modal-title" id="orphanTitle">🚨 Unsent Data</span>
+      <button class="modal-close" onclick="closeOrphanDirect()">✕</button>
+    </div>
+    <div class="modal-info" id="orphanInfo"></div>
+    <div class="modal-card">
+      <div id="orphanEntryList"></div>
+    </div>
+    <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn-primary dbx" id="orphanSendBtn" onclick="sendOrphanedDay()">📦 &nbsp;Send to Dropbox Now</button>
+      <button class="btn-secondary" onclick="dismissOrphanedDayPrompt()">Mark as handled without sending</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="toast" id="tst"></div>
 
@@ -948,20 +1144,156 @@ let eProdV=0,eWastedV=0,eReusedV=0;
 let cProdV=0,cWastedV=0,cReusedV=0;
 
 function saveE(){
-  localStorage.setItem(KEY_E,JSON.stringify(entries));
-  // Dual-write to independent backup keys — if primary wipes, these survive
-  localStorage.setItem(KEY_BACKUP,JSON.stringify(entries));
-  localStorage.setItem(KEY_SESSION,JSON.stringify({date:TODAY,entries}));
+  // Each write attempted independently — a failure in one (e.g. quota exceeded, a
+  // storage restriction) must not silently prevent the others, and a failure in the
+  // PRIMARY write specifically must be loud, not silent. Triple-writing to the same
+  // origin only protects against a single key getting clobbered — it does nothing
+  // against the whole origin being wiped, which is what auto-sync below is for.
+  let primaryOk=true;
+  try{localStorage.setItem(KEY_E,JSON.stringify(entries))}
+  catch(e){primaryOk=false;console.error('Primary entry save failed:',e)}
+  try{localStorage.setItem(KEY_BACKUP,JSON.stringify(entries))}
+  catch(e){console.error('Backup save failed:',e)}
+  try{localStorage.setItem(KEY_SESSION,JSON.stringify({date:TODAY,entries}))}
+  catch(e){console.error('Session save failed:',e)}
+  scheduleAutoSync();
+  return primaryOk;
+}
+
+// ── Auto-sync to Dropbox ────────────────────────────────────────────────────
+// The triple-write above only protects against ONE key getting clobbered — it does
+// nothing if the whole browser storage origin gets wiped (Safari clearing site data,
+// iOS storage pressure, etc.), since all three copies live in that same origin. The
+// only real protection against that is getting data OFF the device continuously, not
+// just duplicating it on-device. This silently mirrors today's log to Dropbox a
+// couple of seconds after every save, using the same stable filename as the manual
+// Send button (mode:overwrite), so it's always the same one file being kept current
+// rather than piling up copies. Never interrupts staff — failures are silent and
+// just retry on the next save.
+let autoSyncTimer=null;
+const AUTO_SYNC_DEBOUNCE_MS=1500;
+function scheduleAutoSync(){
+  if(!getRefreshToken())return; // nothing configured yet — behave exactly as before
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer=setTimeout(runAutoSync,AUTO_SYNC_DEBOUNCE_MS);
+}
+async function runAutoSync(){
+  if(!getRefreshToken()||!entries.length)return;
+  try{
+    const accessToken=await getFreshAccessToken();
+    const unitName=entries[0].unit.replace(/\s+/g,'-');
+    const df=`${String(NOW.getDate()).padStart(2,'0')}-${String(NOW.getMonth()+1).padStart(2,'0')}-${NOW.getFullYear()}`;
+    const filename=`Production-Log-${unitName}-${df}.xlsx`;
+    const path=`/${filename}`;
+
+    // Never let this blindly overwrite a Dropbox copy that already has MORE entries
+    // than exist locally right now. That specific situation means local storage was
+    // wiped and the app reloaded since the last successful sync — the Dropbox copy is
+    // the only complete record left, and overwriting it with a thin local state would
+    // destroy it. If the check itself can't be completed (offline, etc.), fail open and
+    // sync anyway rather than making the whole feature fragile over a network blip.
+    const remoteCount=await getRemoteEntryCount(accessToken,path);
+    if(remoteCount!==null&&remoteCount>entries.length){
+      flagSyncConflict(remoteCount,entries.length);
+      recordSyncStatus(false,entries.length);
+      return;
+    }
+
+    const blob=new Blob([buildXlsx()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const response=await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${accessToken}`,
+        'Dropbox-API-Arg':JSON.stringify({path,mode:'overwrite',autorename:false,mute:true}),
+        'Content-Type':'application/octet-stream'
+      },
+      body:blob
+    });
+    if(response.ok){
+      markUploaded(TODAY,{count:entries.length,method:'auto'});
+      recordSyncStatus(true,entries.length);
+      clearSyncConflict();
+    }else{
+      recordSyncStatus(false,entries.length);
+    }
+  }catch(err){
+    console.error('Auto-sync failed (silent):',err);
+    recordSyncStatus(false,entries.length);
+  }
+}
+// Downloads the currently-live Dropbox file (if any) and returns its data-row count,
+// so runAutoSync can tell whether it's about to regress an already-fuller remote copy.
+// Returns null if the file doesn't exist yet (nothing to conflict with) or if the
+// check itself fails for any reason (network, parsing) — callers should fail open.
+async function getRemoteEntryCount(accessToken,path){
+  try{
+    const resp=await fetch('https://content.dropboxapi.com/2/files/download',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${accessToken}`,
+        'Dropbox-API-Arg':JSON.stringify({path})
+      }
+    });
+    if(!resp.ok)return null; // includes "not found" — brand new day, nothing to compare against
+    const buf=await resp.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    return Math.max(0,rows.length-1); // minus the header row
+  }catch(e){
+    return null;
+  }
+}
+function flagSyncConflict(remoteCount,localCount){
+  try{localStorage.setItem(`fpl_sync_conflict_${TODAY}`,JSON.stringify({remoteCount,localCount,at:Date.now()}))}catch(e){}
+  renderSyncConflict();
+}
+function clearSyncConflict(){
+  try{localStorage.removeItem(`fpl_sync_conflict_${TODAY}`)}catch(e){}
+  renderSyncConflict();
+}
+function renderSyncConflict(){
+  const raw=localStorage.getItem(`fpl_sync_conflict_${TODAY}`);
+  const banner=document.getElementById('conflictBanner');
+  if(!banner)return;
+  if(!raw){banner.style.display='none';return}
+  let rec;try{rec=JSON.parse(raw)}catch(e){banner.style.display='none';return}
+  banner.style.display='flex';
+  document.getElementById('conflictDetail').textContent=
+    `Dropbox already has ${rec.remoteCount} entries for today — this device only shows ${rec.localCount}. Auto-sync has stopped to avoid overwriting it. Do not assume today's log is complete until this is resolved.`;
+}
+function recordSyncStatus(ok,count){
+  try{localStorage.setItem(`fpl_last_sync_${TODAY}`,JSON.stringify({at:Date.now(),ok,count}))}catch(e){}
+  updateSyncBadge();
+}
+function updateSyncBadge(){
+  const badge=document.getElementById('bdgDbx');
+  if(!badge)return;
+  const t=getRefreshToken();
+  if(!t){badge.textContent='📦 Ready';badge.classList.remove('sync-err');return}
+  const raw=localStorage.getItem(`fpl_last_sync_${TODAY}`);
+  if(!raw){badge.textContent='📦 Ready';badge.classList.remove('sync-err');return}
+  try{
+    const rec=JSON.parse(raw);
+    const mins=Math.max(0,Math.round((Date.now()-rec.at)/60000));
+    const when=mins<1?'just now':mins===1?'1m ago':`${mins}m ago`;
+    if(rec.ok){badge.textContent=`☁️ Synced ${when}`;badge.classList.remove('sync-err')}
+    else{badge.textContent='⚠️ Sync issue';badge.classList.add('sync-err')}
+  }catch(e){}
 }
 
 // ── Housekeeping: remove entry/backup keys older than 7 days ───────────────
 (function cleanOldKeys(){
   try{
-    const cutoff=new Date(NOW);cutoff.setDate(cutoff.getDate()-7);
+    // Compare whole calendar days, not exact timestamps — otherwise data logged exactly
+    // 7 days ago can get swept up to a day early depending on what time of day the app
+    // happens to boot, cutting into the grace period the orphan-recovery banner relies on.
+    const today0=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+    const cutoff=new Date(today0);cutoff.setDate(cutoff.getDate()-7);
     for(let i=localStorage.length-1;i>=0;i--){
       const k=localStorage.key(i);
       if(!k)continue;
-      const m=k.match(/^fpl_(?:entries|bk)_(\d{2}) (\w{3}) (\d{4})$/);
+      const m=k.match(/^fpl_(?:entries|bk|uploaded|last_sync|sync_conflict)_(\d{2}) (\w{3}) (\d{4})$/);
       if(!m)continue;
       const d=new Date(`${m[1]} ${m[2]} ${m[3]}`);
       if(!isNaN(d)&&d<cutoff)localStorage.removeItem(k);
@@ -1004,6 +1336,152 @@ function checkRecoveryBanner(){
   document.getElementById('recoverBanner').style.display=(hasBk||hasSess)?'flex':'none';
 }
 
+// ── Cross-day recovery: catch data that was never sent before midnight ─────
+// The auto-restore and manual-recover above only ever look at TODAY's date key.
+// If a day's entries were never uploaded before the app rolled over to a new day,
+// they don't get deleted — but nothing on screen ever points back at them again,
+// because every check up to this point is scoped to TODAY. This scans for exactly
+// that: any other day's entries sitting in storage that were never confirmed sent.
+function parseAppDate(dateStr){
+  if(!dateStr)return null;
+  const parts=dateStr.split(' ');
+  if(parts.length!==3)return null;
+  const day=parseInt(parts[0]),mon=MN.indexOf(parts[1])+1,yr=parseInt(parts[2]);
+  if(isNaN(day)||mon<1||isNaN(yr))return null;
+  return{day,month:mon,year:yr};
+}
+function isUploaded(date,localCount){
+  const raw=localStorage.getItem(`fpl_uploaded_${date}`);
+  if(!raw)return false;
+  try{
+    const rec=JSON.parse(raw);
+    // A day only counts as resolved if the last successful sync captured AT LEAST as
+    // many entries as exist locally right now — otherwise entries added since that
+    // sync are still genuinely at risk, even though something was sent previously.
+    return(rec.count||0)>=(localCount||0);
+  }catch(e){return true} // malformed record — treat as resolved rather than re-flag forever
+}
+function markUploaded(date,meta){localStorage.setItem(`fpl_uploaded_${date}`,JSON.stringify({at:Date.now(),...meta}))}
+
+let orphanedDays=[];
+function findOrphanedDays(){
+  const byDate={};
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k)continue;
+      const m=k.match(/^fpl_(entries|bk)_(.+)$/);
+      if(!m)continue;
+      const date=m[2];
+      if(date===TODAY)continue; // today is handled by the same-day recovery banner instead
+      let arr;
+      try{arr=JSON.parse(localStorage.getItem(k)||'[]')}catch(e){continue}
+      if(!Array.isArray(arr)||!arr.length)continue;
+      if(isUploaded(date,arr.length))continue; // last sync already covered this many entries
+      // Prefer whichever copy for this date has more entries (primary vs backup)
+      if(!byDate[date]||arr.length>byDate[date].length)byDate[date]=arr;
+    }
+  }catch(e){/* scanning must never break the app */}
+  orphanedDays=Object.entries(byDate)
+    .map(([date,entries])=>({date,entries}))
+    .sort((a,b)=>{const da=parseAppDate(a.date),db=parseAppDate(b.date);
+      if(!da||!db)return 0;
+      return new Date(db.year,db.month-1,db.day)-new Date(da.year,da.month-1,da.day);});
+}
+function renderOrphanSection(){
+  const sec=document.getElementById('orphanSection');
+  const badge=document.getElementById('bdgOrphan');
+  if(!orphanedDays.length){
+    sec.style.display='none';
+    badge.classList.remove('on');
+    return;
+  }
+  sec.style.display='block';
+  badge.classList.add('on');
+  document.getElementById('bdgOrphanN').textContent=orphanedDays.length;
+  document.getElementById('orphanList').innerHTML=orphanedDays.map(o=>`
+    <div class="orphan-card">
+      <div class="oc-inner">
+        <div class="oc-icon">🚨</div>
+        <div class="oc-body">
+          <div class="oc-date">${o.date}</div>
+          <div class="oc-meta">${o.entries.length} entr${o.entries.length===1?'y':'ies'} never sent to Dropbox</div>
+        </div>
+        <button class="oc-btn" onclick="openOrphanModal('${o.date.replace(/'/g,"\\'")}')">Review</button>
+      </div>
+    </div>`).join('');
+}
+function openOrphanModal(date){
+  const o=orphanedDays.find(x=>x.date===date);
+  if(!o)return;
+  document.getElementById('orphanTitle').textContent=`🚨 ${date}`;
+  document.getElementById('orphanInfo').innerHTML=
+    `<strong>${o.entries.length} entries never reached Dropbox</strong>These were logged on ${date} but the day changed before they were sent. Nothing has been deleted — review below and send whenever you're ready.`;
+  document.getElementById('orphanEntryList').innerHTML=o.entries.map(e=>{
+    const prodTag=e.isCarryOver?`<span class="etag etag-co">🔄 Carry-over</span>`:`<span class="etag etag-prod">×${e.produced}</span>`;
+    const wT=e.wasted>0?`<span class="etag etag-waste">−${e.wasted}</span>`:'';
+    return`<div class="entry-card done" style="cursor:default">
+      <div class="entry-inner">
+        <div class="entry-dot"></div>
+        <div class="entry-body">
+          <div class="entry-dish">${e.dish}</div>
+          <div class="entry-meta">${e.unit} · ${e.menu} · ${e.staff} · ${e.time}</div>
+        </div>
+        <div class="entry-right"><div class="entry-tags">${prodTag}${wT}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('orphanOverlay').dataset.date=date;
+  document.getElementById('orphanOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeOrphanDirect(){document.getElementById('orphanOverlay').classList.remove('on');document.body.style.overflow=''}
+function closeOrphan(ev){if(ev.target===document.getElementById('orphanOverlay'))closeOrphanDirect()}
+async function sendOrphanedDay(){
+  const date=document.getElementById('orphanOverlay').dataset.date;
+  const o=orphanedDays.find(x=>x.date===date);
+  if(!o)return;
+  if(!getRefreshToken()){toast('No Dropbox token — go to Settings','info');return}
+  const btn=document.getElementById('orphanSendBtn');
+  btn.disabled=true;btn.textContent='Uploading…';
+  try{
+    const accessToken=await getFreshAccessToken();
+    const unitName=(o.entries[0]?.unit||'Unknown').replace(/\s+/g,'-');
+    const pd=parseAppDate(date);
+    const df=pd?`${String(pd.day).padStart(2,'0')}-${String(pd.month).padStart(2,'0')}-${pd.year}`:date.replace(/\s+/g,'-');
+    const filename=`Production-Log-${unitName}-${df}.xlsx`;
+    const blob=new Blob([buildXlsx(o.entries)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const response=await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${accessToken}`,
+        'Dropbox-API-Arg':JSON.stringify({path:`/${filename}`,mode:'overwrite',autorename:false,mute:false}),
+        'Content-Type':'application/octet-stream'
+      },
+      body:blob
+    });
+    if(response.ok){
+      markUploaded(date,{count:o.entries.length,method:'sent'});
+      orphanedDays=orphanedDays.filter(x=>x.date!==date);
+      renderOrphanSection();closeOrphanDirect();
+      toast(`✅ ${date} sent to Dropbox (${o.entries.length} entries)`,'dbx');
+    }else{
+      toast(`Upload failed (${response.status})`,'err');
+    }
+  }catch(err){toast(err.message||'Upload failed','err');console.error(err)}
+  finally{btn.disabled=false;btn.textContent='📦  Send to Dropbox Now';}
+}
+function dismissOrphanedDayPrompt(){
+  const date=document.getElementById('orphanOverlay').dataset.date;
+  const o=orphanedDays.find(x=>x.date===date);
+  if(!o)return;
+  if(!confirm(`Mark ${date} as handled WITHOUT sending it to Dropbox? These ${o.entries.length} entries will stop being flagged, but nothing gets uploaded. This can't be undone from here.`))return;
+  markUploaded(date,{count:o.entries.length,method:'dismissed'});
+  orphanedDays=orphanedDays.filter(x=>x.date!==date);
+  renderOrphanSection();closeOrphanDirect();
+  toast(`${date} marked as handled`,'info');
+}
+
 // ══ Dropbox ═══════════════════════════════════════════════════════════════
 function getRefreshToken(){return localStorage.getItem(KEY_TOKEN)||''}
 function saveToken(){
@@ -1025,6 +1503,7 @@ function updateTokenStatus(){
   document.getElementById('clearTokenBtn').style.display=t?'block':'none';
   document.getElementById('tokenInputSection').style.display=t?'none':'block';
   document.getElementById('bdgDbx').classList.toggle('on',!!t);
+  updateSyncBadge();
   renderBadges();
 }
 async function getFreshAccessToken(){
@@ -1324,6 +1803,7 @@ function selectDish(menu,dish){
   setVal('wastedVal',0);
   setVal('reusedVal',0);
   setNW(false);
+  repState.add=null;renderRepRow('add');
 }
 
 function clearSearch(){
@@ -1376,6 +1856,7 @@ function prodChanged(){
   wastedV=0;setVal('wastedVal',0);
   reusedV=0;setVal('reusedVal',0);
   setCarrySilent(false);setNW(false);
+  repState.add=null;renderRepRow('add');
 }
 function setCarrySilent(yes){
   carryMode=yes;
@@ -1411,6 +1892,7 @@ function eProdChanged(){
   document.getElementById('eBtnYes').className='carry-opt';
   document.getElementById('eCarryAmt').style.display='none';
   setNWE(false);
+  repState.edit=null;renderRepRow('edit');
 }
 function setNWE(on){
   eNwMode=on;
@@ -1470,29 +1952,326 @@ function setCarryC(yes){
 // ══ Recalc ════════════════════════════════════════════════════════════════
 function recalc(){
   document.getElementById('afterServiceSection').style.display=prodV>0?'block':'none';
-  const sold=Math.max(0,prodV-wastedV-reusedV);
+  const rp=repAmt('add');
+  const sold=Math.max(0,prodV-wastedV-reusedV-rp);
   document.getElementById('sumSold').textContent=prodV>0?sold:'—';
   document.getElementById('sumWaste').textContent=wastedV;
   document.getElementById('sumCarry').textContent=reusedV;
+  document.getElementById('sumRep').textContent=rp;
+  document.getElementById('sumRepPill').classList.toggle('on',rp>0);
   document.getElementById('sumStrip').classList.toggle('on',prodV>0);
   document.getElementById('h-wasted').classList.toggle('on',wastedV>prodV);
-  document.getElementById('h-reused').classList.toggle('on',(wastedV+reusedV)>prodV);
+  document.getElementById('h-reused').classList.toggle('on',(wastedV+reusedV+rp)>prodV);
 }
 function recalcE(){
-  const sold=Math.max(0,eProdV-eWastedV-eReusedV);
+  const rp=repAmt('edit');
+  const sold=Math.max(0,eProdV-eWastedV-eReusedV-rp);
   document.getElementById('eSumSold').textContent=eProdV>0?sold:'—';
   document.getElementById('eSumWaste').textContent=eWastedV;
   document.getElementById('eSumCarry').textContent=eReusedV;
+  document.getElementById('eSumRep').textContent=rp;
+  document.getElementById('eSumRepPill').classList.toggle('on',rp>0);
   document.getElementById('h-eWasted').classList.toggle('on',eWastedV>eProdV);
-  document.getElementById('h-eReused').classList.toggle('on',(eWastedV+eReusedV)>eProdV);
+  document.getElementById('h-eReused').classList.toggle('on',(eWastedV+eReusedV+rp)>eProdV);
 }
 function recalcC(){
-  const sold=Math.max(0,cProdV-cWastedV-cReusedV);
+  const rp=repAmt('carry');
+  const sold=Math.max(0,cProdV-cWastedV-cReusedV-rp);
   document.getElementById('cSumSold').textContent=cProdV>0?sold:'—';
   document.getElementById('cSumWaste').textContent=cWastedV;
   document.getElementById('cSumCarry').textContent=cReusedV;
+  document.getElementById('cSumRep').textContent=rp;
+  document.getElementById('cSumRepPill').classList.toggle('on',rp>0);
   document.getElementById('h-cWasted').classList.toggle('on',cWastedV>cProdV);
-  document.getElementById('h-cReused').classList.toggle('on',(cWastedV+cReusedV)>cProdV);
+  document.getElementById('h-cReused').classList.toggle('on',(cWastedV+cReusedV+rp)>cProdV);
+}
+
+// ══ Repurpose (leftovers → a different dish) ══════════════════════════════
+// Logs "I made 10 jackets, sold 5, turned 5 into wedges" without it counting as waste or a
+// carry-over of the SAME dish. Source entry keeps true produced (10) and records
+// repOut (5); sold = produced - wasted - carried - repurposed. The new dish either gets
+// a same-day entry (repIn, produced includes those portions) or a carry-over reminder
+// for tomorrow. repId links the pair so later edits stay in step.
+let repState={add:null,edit:null,carry:null};   // {amt,menu,dish,when,id}
+let repCtx=null,repPick=null,repWhen='today';
+const REP_DOM={
+  add:{sum:'repSummary',btn:'repBtn',pill:'sumRepPill',val:'sumRep'},
+  edit:{sum:'eRepSummary',btn:'eRepBtn',pill:'eSumRepPill',val:'eSumRep'},
+  carry:{sum:'cRepSummary',btn:'cRepBtn',pill:'cSumRepPill',val:'cSumRep'}
+};
+function newRepId(){return 'rp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function repAmt(ctx){return repState[ctx]?repState[ctx].amt:0}
+function repOf(e){
+  return e&&e.repOut>0?{amt:e.repOut,menu:e.repToMenu,dish:e.repTo,when:e.repWhen||'today',id:e.repId,toUnit:e.repToUnit||''}:null;
+}
+// A repurpose that leaves this kitchen: nothing is created locally — the other unit logs the receipt itself
+function repIsCross(r,srcUnit){return !!(r&&r.toUnit&&r.toUnit!==srcUnit)}
+function renderRepRow(ctx){
+  const d=REP_DOM[ctx],r=repState[ctx];
+  const sum=document.getElementById(d.sum),btn=document.getElementById(d.btn);
+  if(!sum||!btn)return;
+  if(r){
+    const what=r.toUnit?`sent to <strong>${r.toUnit}</strong>`:`${r.dish} · served ${r.when==='tomorrow'?'tomorrow':'today'}`;
+    sum.innerHTML=`<span class="rs-txt">🔁 <strong>${r.amt}</strong> → ${what}</span>`+
+      `<button class="rs-x" title="Remove" onclick="clearRep('${ctx}')">✕</button>`;
+    sum.classList.add('on');btn.textContent='✎ Change repurpose';
+  } else {
+    sum.innerHTML='';sum.classList.remove('on');btn.textContent='🔁 Repurpose into another dish';
+  }
+}
+function clearRep(ctx){
+  repState[ctx]=null;renderRepRow(ctx);
+  if(ctx==='add')recalc();else if(ctx==='edit')recalcE();else recalcC();
+}
+// Portions left to repurpose = produced - wasted - carried over (rep itself excluded)
+function repRemaining(ctx){
+  if(ctx==='add')return prodV-wastedV-(carryMode?reusedV:0);
+  if(ctx==='edit')return eProdV-eWastedV-eReusedV;
+  return cProdV-cWastedV-(cCarryMode?cReusedV:0);
+}
+function repSource(ctx){
+  if(ctx==='add'){
+    const sel=document.getElementById('dishSel').value;
+    const other=document.getElementById('otherDishInput').value.trim();
+    const name=(sel==='__OTHER__')?other:sel;
+    return{unit:document.getElementById('unitSel').value,dish:name,menu:document.getElementById('menuSel').value};
+  }
+  if(ctx==='edit'){const e=entries[editIdx];return e?{unit:e.unit,dish:e.dish,menu:e.menu}:null}
+  return activeCarryObj?{unit:activeCarryObj.unit,dish:activeCarryObj.dish,menu:activeCarryObj.menu}:null;
+}
+function openRep(ctx){
+  const src=repSource(ctx);
+  if(!src||!src.unit){toast('Select a unit first','info');return}
+  if(!src.dish){toast('Pick the dish first','info');return}
+  const prodNow=ctx==='add'?prodV:ctx==='edit'?eProdV:cProdV;
+  if(prodNow<1){toast('Enter portions produced first','info');return}
+  repCtx=ctx;
+  const cur=repState[ctx];
+  const room=repRemaining(ctx);
+  const startAmt=cur?cur.amt:Math.max(0,room);
+  repPick=cur?{menu:cur.menu,dish:cur.dish}:null;
+  repWhen=cur?cur.when:'today';
+  document.getElementById('repInfo').innerHTML=`<strong>${src.dish}</strong>${src.unit} · ${prodNow} produced`;
+  const us=document.getElementById('repUnitSel');
+  us.innerHTML=`<option value="">This kitchen (${src.unit})</option>`+
+    Object.keys(menuData).filter(u=>u!==src.unit).sort().map(u=>`<option value="${u}">Send to ${u}</option>`).join('');
+  us.value=(cur&&cur.toUnit)?cur.toUnit:'';
+  setVal('repAmtVal',startAmt);
+  document.getElementById('repSearch').value='';
+  document.getElementById('repSuggest').classList.remove('on');
+  document.getElementById('repSuggest').innerHTML='';
+  ['h-repAmt','h-repPick'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  showRepPicked();setRepWhen(repWhen);updateRepMaxHint();onRepUnitChange();
+  document.getElementById('repRemoveBtn').style.display=cur?'block':'none';
+  document.getElementById('repOverlay').classList.add('on');
+}
+function updateRepMaxHint(){
+  const room=repRemaining(repCtx);
+  document.getElementById('repMaxHint').textContent=`Up to ${Math.max(0,room)} left after waste & carry-over`;
+}
+function onRepUnitChange(){
+  const u=document.getElementById('repUnitSel').value;
+  document.getElementById('repLocalBlock').style.display=u?'none':'block';
+  document.getElementById('repCrossBlock').style.display=u?'block':'none';
+  if(u)document.getElementById('repCrossText').innerHTML=
+    `This takes the portions off this dish and records them as <strong>sent to ${u}</strong>. ${u} then logs them on their own tablet with <strong>📥 Received from another unit</strong>, and their waste counts against them.`;
+}
+function adjRep(d){setVal('repAmtVal',Math.max(0,readVal('repAmtVal')+d))}
+function stepInputRep(){}
+function setRepWhen(w){
+  repWhen=w;
+  document.getElementById('repToday').className='carry-opt'+(w==='today'?' sel-yes':'');
+  document.getElementById('repTomorrow').className='carry-opt'+(w==='tomorrow'?' sel-yes':'');
+  document.getElementById('repWhenHelp').textContent=w==='today'
+    ?'A new entry for the new dish is added to today’s log automatically — tap it later to enter its waste.'
+    :'A carry-over reminder for the new dish appears tomorrow, showing where it came from.';
+}
+function showRepPicked(){
+  const el=document.getElementById('repPicked');
+  if(repPick){el.textContent=`✓ ${repPick.dish}  ·  ${repPick.menu}`;el.classList.add('on')}
+  else{el.textContent='';el.classList.remove('on')}
+}
+function onRepSearch(){
+  const q=document.getElementById('repSearch').value.trim();
+  const box=document.getElementById('repSuggest');
+  if(q.length<2){box.classList.remove('on');box.innerHTML='';return}
+  const src=repSource(repCtx);
+  const menus=(src&&menuData[src.unit])||Object.values(menuData)[0]||{};
+  const matches=fuzzyMatchDishes(q,menus).filter(m=>!(src&&m.dish===src.dish&&m.menu===src.menu)&&!isCatchAllDish(m.dish));
+  if(!matches.length){
+    box.innerHTML='<div class="search-empty">No match on this unit’s menu — log it separately via Add Entry → Other</div>';
+    box.classList.add('on');return;
+  }
+  box.innerHTML=matches.slice(0,8).map((m,i)=>`
+    <div class="search-result-item" data-rep-i="${i}">
+      <div class="sri-dish">${m.dish}${m.score<2?'<span class="sri-typo">possible match</span>':''}</div>
+      <div class="sri-menu">${m.menu}</div>
+    </div>`).join('');
+  box.querySelectorAll('[data-rep-i]').forEach(el=>{
+    const m=matches[+el.getAttribute('data-rep-i')];
+    el.onclick=()=>pickRepTarget(m.menu,m.dish);
+  });
+  box.classList.add('on');
+}
+function pickRepTarget(menu,dish){
+  repPick={menu,dish};showRepPicked();
+  document.getElementById('h-repPick').classList.remove('on');
+  document.getElementById('repSearch').value='';
+  document.getElementById('repSuggest').classList.remove('on');
+  document.getElementById('repSuggest').innerHTML='';
+}
+function confirmRep(){
+  if(!repCtx)return;
+  const amt=readVal('repAmtVal');
+  const room=repRemaining(repCtx);
+  const toUnit=document.getElementById('repUnitSel').value;
+  let ok=true;
+  if(amt<1||amt>room){document.getElementById('h-repAmt').classList.add('on');ok=false}
+  else document.getElementById('h-repAmt').classList.remove('on');
+  if(!toUnit&&!repPick){document.getElementById('h-repPick').classList.add('on');ok=false}
+  if(!ok)return;
+  const prev=repState[repCtx];
+  repState[repCtx]=toUnit
+    ?{amt,menu:null,dish:null,when:'today',id:prev?prev.id:newRepId(),toUnit}
+    :{amt,menu:repPick.menu,dish:repPick.dish,when:repWhen,id:prev?prev.id:newRepId(),toUnit:''};
+  const ctx=repCtx;
+  renderRepRow(ctx);
+  if(ctx==='add')recalc();else if(ctx==='edit')recalcE();else recalcC();
+  closeRepDirect();
+}
+function removeRepFromPicker(){const ctx=repCtx;closeRepDirect();if(ctx)clearRep(ctx)}
+function closeRepDirect(){document.getElementById('repOverlay').classList.remove('on');repCtx=null}
+function closeRep(ev){if(ev.target===document.getElementById('repOverlay'))closeRepDirect()}
+
+// Auto-notes. Wording is deliberate: the reporting tool treats comments containing words like
+// "reused", "carried", "portion" or "for " as carry-over rows, so these notes avoid them.
+function repNoteOut(r){
+  return r.toUnit?`Repurposed x${r.amt} sent to ${r.toUnit}`
+                 :`Repurposed x${r.amt} into ${r.dish} - served ${r.when==='tomorrow'?'tomorrow':'today'}`;
+}
+function stripRepNote(s){
+  return (s||'').replace(/\s*Repurposed x\d+ into .+? - served (?:today|tomorrow)\.?/i,'')
+                .replace(/\s*Repurposed x\d+ sent to .+$/i,'')
+                .replace(/\.\s*$/,'').trim();
+}
+function stripAutoNotes(s){return stripRepNote(stripReuseNote(s))}
+// Create the receiving side of a repurpose
+function applyRep(src,r){
+  if(r.when==='tomorrow'){
+    carryovers.push({fromDate:TODAY,unit:src.unit,menu:r.menu,dish:r.dish,reusedAmt:r.amt,
+      originalComments:`Repurposed from ${src.dish} x${r.amt}`,repId:r.id});
+    saveC();
+  } else {
+    const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    entries.push({date:TODAY,weekCommencing:WC,unit:src.unit,menu:r.menu,dish:r.dish,
+      produced:r.amt,wasted:0,sold:r.amt,reused:0,wasteRate:0,
+      comments:`Repurposed in x${r.amt} from ${src.dish}`,staff:src.staff||'',time,
+      wastePending:true,isCarryOver:false,repIn:r.amt,repFrom:src.dish,repId:r.id});
+  }
+}
+function removeRepTargets(id){
+  if(!id)return;
+  for(let i=entries.length-1;i>=0;i--)if(entries[i].repId===id&&entries[i].repIn>0)entries.splice(i,1);
+  for(let i=carryovers.length-1;i>=0;i--)if(carryovers[i].repId===id)carryovers.splice(i,1);
+}
+// Bring the receiving side in line after the source entry was edited
+function syncRep(src,oldR,newR){
+  if(!oldR&&!newR)return;
+  const oldLocal=oldR&&!repIsCross(oldR,src.unit),newLocal=newR&&!repIsCross(newR,src.unit);
+  if(!oldLocal&&!newLocal)return;                                   // nothing created on this tablet either way
+  if(!newLocal){removeRepTargets(oldR.id);saveE();saveC();return}   // e.g. changed to "send to another unit"
+  if(!oldLocal){applyRep(src,newR);saveE();return}
+  const same=oldR.dish===newR.dish&&oldR.menu===newR.menu&&oldR.when===newR.when;
+  const tEntry=entries.find(e=>e.repId===oldR.id&&e.repIn>0);
+  const tCarry=carryovers.find(c=>c.repId===oldR.id);
+  if(same&&(tEntry||tCarry)){
+    if(tEntry){
+      const delta=newR.amt-tEntry.repIn;
+      tEntry.produced=Math.max(newR.amt,tEntry.produced+delta);
+      tEntry.repIn=newR.amt;
+      tEntry.sold=Math.max(0,tEntry.produced-tEntry.wasted-(tEntry.reused||0));
+      tEntry.wasteRate=tEntry.produced>0?Math.round((tEntry.wasted/tEntry.produced)*100):0;
+      tEntry.comments=`Repurposed in x${newR.amt} from ${src.dish}`;
+      saveE();
+    }
+    if(tCarry){tCarry.reusedAmt=newR.amt;tCarry.originalComments=`Repurposed from ${src.dish} x${newR.amt}`;saveC()}
+    return;
+  }
+  removeRepTargets(oldR.id);
+  applyRep(src,newR);
+  saveE();saveC();
+}
+function repFields(r){
+  return r?{repOut:r.amt,repTo:r.dish||undefined,repToMenu:r.menu||undefined,repWhen:r.toUnit?undefined:r.when,repId:r.id,repToUnit:r.toUnit||undefined}
+          :{repOut:undefined,repTo:undefined,repToMenu:undefined,repWhen:undefined,repId:undefined,repToUnit:undefined}; // undefined = dropped on save, so non-repurposed entries stay exactly as before
+}
+
+// ══ Received from another unit ═══════════════════════════════════════════
+// The other kitchen's tablet can't create anything here, so the receiving unit logs the
+// portions itself. They become a normal line (produced = received) whose waste counts here.
+let recvPick=null;
+function openRecv(){
+  const staff=document.getElementById('staffName').value.trim();
+  const unit=document.getElementById('unitSel').value;
+  if(!staff){toast('Enter your name first','info');return}
+  if(!unit){toast('Select your unit first','info');return}
+  recvPick=null;
+  document.getElementById('recvInfo').innerHTML=`<strong>Logging for ${unit}</strong>Portions another kitchen sent you today`;
+  const from=document.getElementById('recvFromSel');
+  from.innerHTML='<option value="">Select unit…</option>'+Object.keys(menuData).filter(u=>u!==unit).sort().map(u=>`<option value="${u}">${u}</option>`).join('');
+  document.getElementById('recvSearch').value='';
+  document.getElementById('recvSuggest').classList.remove('on');document.getElementById('recvSuggest').innerHTML='';
+  setVal('recvAmtVal',0);showRecvPicked();
+  ['h-recvFrom','h-recvPick','h-recvAmt'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('recvOverlay').classList.add('on');
+}
+function closeRecvDirect(){document.getElementById('recvOverlay').classList.remove('on')}
+function closeRecv(ev){if(ev.target===document.getElementById('recvOverlay'))closeRecvDirect()}
+function adjRecv(d){setVal('recvAmtVal',Math.max(0,readVal('recvAmtVal')+d))}
+function showRecvPicked(){
+  const el=document.getElementById('recvPicked');
+  if(recvPick){el.textContent=`✓ ${recvPick.dish}  ·  ${recvPick.menu}`;el.classList.add('on')}
+  else{el.textContent='';el.classList.remove('on')}
+}
+function onRecvSearch(){
+  const q=document.getElementById('recvSearch').value.trim();
+  const box=document.getElementById('recvSuggest');
+  if(q.length<2){box.classList.remove('on');box.innerHTML='';return}
+  const unit=document.getElementById('unitSel').value;
+  const matches=fuzzyMatchDishes(q,menuData[unit]||{}).filter(m=>!isCatchAllDish(m.dish));
+  if(!matches.length){box.innerHTML='<div class="search-empty">No match on this unit’s menu</div>';box.classList.add('on');return}
+  box.innerHTML=matches.slice(0,8).map((m,i)=>`
+    <div class="search-result-item" data-recv-i="${i}">
+      <div class="sri-dish">${m.dish}${m.score<2?'<span class="sri-typo">possible match</span>':''}</div>
+      <div class="sri-menu">${m.menu}</div>
+    </div>`).join('');
+  box.querySelectorAll('[data-recv-i]').forEach(el=>{
+    const m=matches[+el.getAttribute('data-recv-i')];
+    el.onclick=()=>{recvPick={menu:m.menu,dish:m.dish};showRecvPicked();
+      document.getElementById('h-recvPick').classList.remove('on');
+      document.getElementById('recvSearch').value='';box.classList.remove('on');box.innerHTML=''};
+  });
+  box.classList.add('on');
+}
+function confirmRecv(){
+  const staff=document.getElementById('staffName').value.trim();
+  const unit=document.getElementById('unitSel').value;
+  const from=document.getElementById('recvFromSel').value;
+  const amt=readVal('recvAmtVal');
+  let ok=true;
+  if(!from){document.getElementById('h-recvFrom').classList.add('on');ok=false}
+  if(!recvPick){document.getElementById('h-recvPick').classList.add('on');ok=false}
+  if(amt<1){document.getElementById('h-recvAmt').classList.add('on');ok=false}
+  if(!ok||!staff||!unit)return;
+  const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  entries.push({date:TODAY,weekCommencing:WC,unit,menu:recvPick.menu,dish:recvPick.dish,
+    produced:amt,wasted:0,sold:amt,reused:0,wasteRate:0,comments:`Received x${amt} from ${from}`,
+    staff,time,wastePending:true,isCarryOver:false,repIn:amt,repFrom:recvPick.dish,repFromUnit:from,repId:newRepId()});
+  const saved=saveE();
+  renderAll();closeRecvDirect();
+  if(!saved)toast('⚠️ Could not save to device storage — tell your manager','err');
+  else toast(`${amt} ${recvPick.dish} received from ${from} — add waste after service`,'teal');
+  switchTab('log');
 }
 
 // ══ Hints ═════════════════════════════════════════════════════════════════
@@ -1524,6 +2303,8 @@ function addEntry(){
   // comment/carry-over note only, not the dish field.
   const dish=isOther?otherText:dishSelVal;
   const produced=prodV,wasted=wastedV,reused=carryMode?reusedV:0;
+  const rep_=repState.add;                           // null | {amt,menu,dish,when,id}
+  const repAmtN=rep_?rep_.amt:0;
   const comments=document.getElementById('cmts').value.trim();
   let ok=true;
   if(!staff){sh('h-staff');mf('staffName');ok=false}
@@ -1533,28 +2314,38 @@ function addEntry(){
   else if((isOther||isCatchAll)&&!otherText){sh('h-otherDish');ok=false}
   if(produced<1){sh('h-prod');ok=false}
   if(wasted>produced){sh('h-wasted');ok=false}
-  if((wasted+reused)>produced){sh('h-reused');ok=false}
+  if((wasted+reused+repAmtN)>produced){sh('h-reused');ok=false}
+  if(rep_&&unit&&!repIsCross(rep_,unit)&&!((menuData[unit]||{})[rep_.menu]||[]).includes(rep_.dish)){
+    toast('The repurposed dish is not on this unit’s menu — choose it again','err');
+    repState.add=null;renderRepRow('add');recalc();ok=false;
+  }
   if(!ok)return;
-  const sold=produced-wasted-reused;
+  const sold=produced-wasted-reused-repAmtN;
   const wr=produced>0?Math.round((wasted/produced)*100):0;
-  const wastePending=produced>0&&wasted===0&&reused===0&&!nwMode;
+  const wastePending=produced>0&&wasted===0&&reused===0&&repAmtN===0&&!nwMode;
   // carryNote is what shows in the carry-over reminder preview — includes the "not on
   // menu" / catch-all identification flag but never the Reused tail (redundant next to reusedAmt)
   let carryNote=comments;
   if(isOther)carryNote=(carryNote?carryNote+'. ':'')+`Not on menu list — added manually as "${dish}"`;
   else if(isCatchAll)carryNote=(carryNote?carryNote+'. ':'')+`${dishSelVal}: ${otherText}`;
   let autoComment=carryNote;
+  if(rep_)autoComment=(autoComment?autoComment+'. ':'')+repNoteOut(rep_);
   if(reused>0)autoComment=(autoComment?autoComment+'. ':'')+`Reused: ${reused} portions carried to next day`;
   const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   entries.push({date:TODAY,weekCommencing:WC,unit,menu,dish,produced,wasted,sold,reused,
-    wasteRate:wr,comments:autoComment,staff,time,wastePending,isCarryOver:false});
-  saveE();
+    wasteRate:wr,comments:autoComment,staff,time,wastePending,isCarryOver:false,...(rep_?repFields(rep_):{})});
+  if(rep_&&!repIsCross(rep_,unit))applyRep({unit,dish,menu,staff},rep_);
+  const saved=saveE();
   if(reused>0){carryovers.push({fromDate:TODAY,unit,menu,dish,reusedAmt:reused,originalComments:carryNote});saveC()}
   renderAll();
-  if(wastePending)toast(`${dish} added — add waste after service`,'info');
+  if(!saved)toast('⚠️ Could not save to device storage — tell your manager','err');
+  else if(wastePending)toast(`${dish} added — add waste after service`,'info');
+  else if(rep_&&rep_.toUnit)toast(`${dish} logged — ${rep_.amt} sent to ${rep_.toUnit}`,'teal');
+  else if(rep_)toast(`${dish} logged — ${rep_.amt} repurposed into ${rep_.dish} (${rep_.when})`,'teal');
   else if(reused>0)toast(`${dish} logged — carry-over set for tomorrow`,'teal');
   else toast(`${dish} added ✓`,'ok');
   // Reset
+  repState.add=null;renderRepRow('add');
   prodV=0;wastedV=0;reusedV=0;
   setVal('prodVal',0);
   setVal('wastedVal',0);
@@ -1575,7 +2366,7 @@ function addEntry(){
 
 // ══ Render ════════════════════════════════════════════════════════════════
 const pc=()=>entries.filter(e=>e.wastePending).length;
-function renderAll(){renderCarryovers();renderEntries();renderBadges();checkRecoveryBanner()}
+function renderAll(){renderCarryovers();renderEntries();renderBadges();checkRecoveryBanner();renderOrphanSection();renderSyncConflict()}
 function renderBadges(){
   const n=entries.length,p=pc(),cc=carryovers.filter(c=>c.fromDate!==TODAY).length,ht=getRefreshToken();
   document.getElementById('bdgCnt').textContent=`${n} entr${n===1?'y':'ies'}`;
@@ -1590,6 +2381,7 @@ function renderBadges(){
   document.getElementById('noTokenWarn').style.display=(!ht&&n>0)?'flex':'none';
   document.getElementById('dlPendN').textContent=p;
   document.getElementById('dlNote').style.display=p>0?'flex':'none';
+  updateSyncBadge();
 }
 function daysSince(dateStr){
   if(!dateStr)return 0;
@@ -1658,7 +2450,11 @@ function renderEntries(){
     document.getElementById('eList').innerHTML=[...entries].reverse().map((e,ri)=>{
       const i=entries.length-1-ri;
       const wT=!e.wastePending&&e.wasted>0?`<span class="etag etag-waste">−${e.wasted}</span>`:'';
-      const rT=e.reused>0?`<span class="etag etag-carry">🔄${e.reused}</span>`:'';
+      const rT=(e.reused>0?`<span class="etag etag-carry">🔄${e.reused}</span>`:'')+
+        (e.repOut>0?`<span class="etag etag-rep">🔁−${e.repOut}</span>`:'')+
+        (e.repIn>0?`<span class="etag etag-rep">🔁+${e.repIn}</span>`:'');
+      const repMeta=e.repOut>0?` · 🔁 ${e.repOut} → ${e.repToUnit?'sent to '+e.repToUnit:e.repTo}`
+        :e.repFromUnit?` · 📥 received from ${e.repFromUnit}`:e.repFrom?` · 🔁 from ${e.repFrom}`:'';
       const st=e.wastePending?`<span class="etag etag-pend">⚠ Pending</span>`:`<span class="etag etag-done">✓ Done</span>`;
       const prodTag=e.isCarryOver
         ?`<span class="etag etag-co">🔄 Carry-over</span>`
@@ -1669,7 +2465,7 @@ function renderEntries(){
           <div class="entry-dot"></div>
           <div class="entry-body">
             <div class="entry-dish">${e.dish}</div>
-            <div class="entry-meta">${e.unit} · ${e.menu} · ${e.staff} · ${e.time}</div>
+            <div class="entry-meta">${e.unit} · ${e.menu} · ${e.staff} · ${e.time}${repMeta}</div>
           </div>
           <div class="entry-right">
             <div class="entry-tags">${prodTag}${wT}${rT}</div>
@@ -1700,7 +2496,8 @@ function openEdit(idx){
   document.getElementById('eBtnYes').className='carry-opt'+(eCarryMode?' sel-yes':'');
   document.getElementById('eCarryAmt').style.display=eCarryMode?'block':'none';
   // Restore Confirm-No-Waste state: entry was closed with zero waste, no carry-over, and wasn't left pending
-  eNwMode=(!e.wastePending&&e.wasted===0&&eReusedV===0&&e.produced>0);
+  repState.edit=repOf(e);renderRepRow('edit');
+  eNwMode=(!e.wastePending&&e.wasted===0&&eReusedV===0&&!repState.edit&&e.produced>0);
   document.getElementById('eNwBtn').classList.toggle('on',eNwMode);
   ['h-eProd','h-eWasted','h-eReused'].forEach(id=>document.getElementById(id).classList.remove('on'));
   recalcE();
@@ -1721,19 +2518,26 @@ function saveEdit(){
   if(editIdx===null)return;
   if(eProdV<1){sh('h-eProd');return}
   if(eWastedV>eProdV){sh('h-eWasted');return}
-  if((eWastedV+eReusedV)>eProdV){sh('h-eReused');return}
-  const sold=eProdV-eWastedV-eReusedV;
+  const newRep=repState.edit;
+  if((eWastedV+eReusedV+(newRep?newRep.amt:0))>eProdV){sh('h-eReused');return}
+  const sold=eProdV-eWastedV-eReusedV-(newRep?newRep.amt:0);
   const wr=eProdV>0?Math.round((eWastedV/eProdV)*100):0;
-  const baseComments=stripReuseNote(document.getElementById('eCmts').value.trim());
+  const baseComments=stripAutoNotes(document.getElementById('eCmts').value.trim());
   let comments=baseComments;
+  if(newRep)comments=(comments?comments+'. ':'')+repNoteOut(newRep);
   if(eReusedV>0)comments=(comments?comments+'. ':'')+`Reused: ${eReusedV} portions carried to next day`;
   // wastePending is recomputed every save, not hardcoded — an entry saved with 0 waste,
   // no carry-over, and no Confirm-No-Waste stays Pending rather than silently closing
-  const wastePending=eProdV>0&&eWastedV===0&&eReusedV===0&&!eNwMode;
+  const wastePending=eProdV>0&&eWastedV===0&&eReusedV===0&&!newRep&&!eNwMode;
   const oldE=entries[editIdx];
   const oldReused=oldE.reused||0;
-  entries[editIdx]={...oldE,produced:eProdV,wasted:eWastedV,sold,reused:eReusedV,wasteRate:wr,comments,wastePending};
-  saveE();
+  const oldRep=repOf(oldE);
+  // An entry that RECEIVED repurposed portions can't claim more received than it produced
+  const repInKeep=oldE.repIn>0?Math.min(oldE.repIn,eProdV):oldE.repIn;
+  entries[editIdx]={...oldE,produced:eProdV,wasted:eWastedV,sold,reused:eReusedV,wasteRate:wr,comments,wastePending,
+    ...repFields(newRep),...(oldE.repIn>0?{repIn:repInKeep}:{})};
+  syncRep({unit:oldE.unit,dish:oldE.dish,menu:oldE.menu,staff:oldE.staff},oldRep,newRep);
+  const saved=saveE();
   // Only touch the carry-over list if the reused amount actually changed — re-saving an
   // already-carried-over entry unchanged must not duplicate its reminder
   if(eReusedV!==oldReused){
@@ -1748,7 +2552,9 @@ function saveEdit(){
     saveC();
   }
   renderAll();closeEditDirect();
-  if(wastePending)toast('Saved — still needs waste filled in','info');
+  if(!saved)toast('⚠️ Could not save to device storage — tell your manager','err');
+  else if(wastePending)toast('Saved — still needs waste filled in','info');
+  else if(newRep&&!oldRep)toast(newRep.toUnit?`${newRep.amt} sent to ${newRep.toUnit}`:`${newRep.amt} repurposed into ${newRep.dish} (${newRep.when})`,'teal');
   else toast(eReusedV>0?'Updated — carry-over set for tomorrow':'Entry updated ✓',eReusedV>0?'teal':'ok');
 }
 
@@ -1772,6 +2578,7 @@ function openCarryModal(idx){
   document.getElementById('cBtnYes').className='carry-opt';
   document.getElementById('cCarryAmt').style.display='none';
   document.getElementById('cNwBtn').classList.remove('on');
+  repState.carry=null;renderRepRow('carry');
   ['h-cStaff','h-cProd','h-cWasted','h-cReused'].forEach(id=>document.getElementById(id).classList.remove('on'));
   recalcC();
   document.getElementById('carryOverlay').classList.add('on');
@@ -1784,13 +2591,18 @@ function confirmCarry(){
   const c=activeCarryObj; // captured at open time — immune to the list changing while the modal was open
   const staff=document.getElementById('cStaff').value.trim();
   const available=cProdV,w=cWastedV,r=cCarryMode?cReusedV:0;
+  const cRep=repState.carry,cRepAmt=cRep?cRep.amt:0;
   let ok=true;
   if(!staff){sh('h-cStaff');ok=false}
   if(available<1){sh('h-cProd');ok=false}
   if(w>available){sh('h-cWasted');ok=false}
-  if((w+r)>available){sh('h-cReused');ok=false}
+  if((w+r+cRepAmt)>available){sh('h-cReused');ok=false}
+  if(cRep&&!repIsCross(cRep,c.unit)&&!((menuData[c.unit]||{})[cRep.menu]||[]).includes(cRep.dish)){
+    toast('The repurposed dish is not on this unit’s menu — choose it again','err');
+    repState.carry=null;renderRepRow('carry');recalcC();ok=false;
+  }
   if(!ok)return;
-  const sold=available-w-r;
+  const sold=available-w-r-cRepAmt;
   const wr=available>0?Math.round((w/available)*100):0;
   const rawComments=document.getElementById('cCmts').value.trim();
   // Carry the original provenance note (e.g. "Not on menu list — added manually as X")
@@ -1800,33 +2612,48 @@ function confirmCarry(){
   let comments=carryChain;
   comments=(comments?comments+'. ':'')+`Carry-over from ${c.fromDate}: ${available} portions available, ${sold} sold, ${w} wasted`;
   if(r>0)comments+=`, ${r} carried to next day`;
+  if(cRep)comments+=`. ${repNoteOut(cRep)}`;
   // wastePending recomputed the same way as a fresh entry — 0 wasted with no re-carry and no
   // Confirm-No-Waste stays Pending instead of always closing silently
-  const wastePending=available>0&&w===0&&r===0&&!cNwMode;
+  const wastePending=available>0&&w===0&&r===0&&cRepAmt===0&&!cNwMode;
   const time=NOW.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   entries.push({date:TODAY,weekCommencing:WC,unit:c.unit,menu:c.menu,dish:c.dish,
-    produced:0,wasted:w,sold,reused:r,wasteRate:wr,comments,staff,time,wastePending,isCarryOver:true});
-  saveE();
+    produced:0,wasted:w,sold,reused:r,wasteRate:wr,comments,staff,time,wastePending,isCarryOver:true,
+    ...(cRep?repFields(cRep):{})});
+  if(cRep&&!repIsCross(cRep,c.unit))applyRep({unit:c.unit,dish:c.dish,menu:c.menu,staff},cRep);
+  const saved=saveE();
   // Remove by object reference rather than the stored index, in case the carryovers array
   // shifted between opening the modal and confirming
   const removeIdx=carryovers.indexOf(c);
   if(removeIdx>-1)carryovers.splice(removeIdx,1);
   if(r>0)carryovers.push({fromDate:TODAY,unit:c.unit,menu:c.menu,dish:c.dish,reusedAmt:r,originalComments:carryChain});
-  saveC();renderAll();closeCarryDirect();
-  toast(wastePending?`${c.dish} logged — add waste after service`:`${c.dish} logged from carry-over ✓`,wastePending?'info':'ok');
+  saveC();repState.carry=null;renderRepRow('carry');renderAll();closeCarryDirect();
+  if(!saved)toast('⚠️ Could not save to device storage — tell your manager','err');
+  else if(cRep&&cRep.toUnit)toast(`${cRep.amt} sent to ${cRep.toUnit}`,'teal');
+  else if(cRep)toast(`${cRep.amt} repurposed into ${cRep.dish} (${cRep.when})`,'teal');
+  else toast(wastePending?`${c.dish} logged — add waste after service`:`${c.dish} logged from carry-over ✓`,wastePending?'info':'ok');
 }
 
 // ══ Build xlsx ════════════════════════════════════════════════════════════
-function buildXlsx(){
+function buildXlsx(entriesArg){
+  const src=entriesArg||entries;
   const headers=['Date','Week Commencing','Unit/Kitchen','Menu','Dish Name',
-    'Portions Produced','Portions Wasted','Portions Sold','Waste %','Comments','Logged By'];
-  const rows=entries.map(e=>[e.date,e.weekCommencing,e.unit,e.menu,e.dish,
-    e.isCarryOver?0:e.produced,e.wasted,e.sold,e.wasteRate,e.comments,e.staff]);
+    'Portions Produced','Portions Wasted','Portions Sold','Waste %','Comments','Logged By',
+    'Portions Repurposed Out','Portions Repurposed In','Repurposed To Unit','Repurposed From Unit'];
+  // 'Portions Produced' is what THIS dish line had to sell: portions turned into another dish
+  // are taken off here and appear on the receiving dish's row instead, so totals across the day
+  // (and in any master sheet that sums this column) count each portion once.
+  // Produced + Repurposed Out = what was actually cooked.
+  const netProd=e=>Math.max(0,(e.produced||0)-(e.repOut||0));
+  const rows=src.map(e=>[e.date,e.weekCommencing,e.unit,e.menu,e.dish,
+    e.isCarryOver?0:netProd(e),e.wasted,e.sold,
+    (e.repOut>0&&netProd(e)>0)?Math.round((e.wasted/netProd(e))*100):e.wasteRate,
+    e.comments,e.staff,e.repOut||0,e.repIn||0,e.repToUnit||'',e.repFromUnit||'']);
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=[{wch:14},{wch:16},{wch:14},{wch:18},{wch:30},{wch:17},{wch:15},{wch:14},{wch:9},{wch:40},{wch:14}];
+  ws['!cols']=[{wch:14},{wch:16},{wch:14},{wch:18},{wch:30},{wch:17},{wch:15},{wch:14},{wch:9},{wch:40},{wch:14},{wch:22},{wch:22},{wch:20},{wch:20}];
   const yellow={patternType:'solid',fgColor:{rgb:'FFFDE7'},bgColor:{rgb:'FFFDE7'}};
   const lteal={patternType:'solid',fgColor:{rgb:'F0FDFA'},bgColor:{rgb:'F0FDFA'}};
-  entries.forEach((e,i)=>{
+  src.forEach((e,i)=>{
     const fill=e.wastePending?yellow:e.isCarryOver?lteal:null;
     if(!fill)return;
     headers.forEach((_,c)=>{
@@ -1898,6 +2725,7 @@ async function doUpload(){
       });
     }catch(crErr){console.error('Carry-over report upload failed (silent):',crErr)}
     if(response.ok){
+      markUploaded(TODAY,{count:entries.length,method:'sent'});
       const p=pc();
       toast(p>0?`Uploaded ✓ — ${p} entr${p===1?'y':'ies'} still pending`:`Uploaded to Dropbox ✓`,'dbx');
     } else {
@@ -1927,6 +2755,7 @@ loadMenuData();
 rebuildUnitDropdown();
 updateMenuStatus();
 updateTokenStatus();
+findOrphanedDays();
 renderAll();
 </script>
 </body>
